@@ -1,0 +1,3 @@
+# GIT IGNORE FILES
+**/venv
+**/__pycache__
