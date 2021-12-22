@@ -1,7 +1,9 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, BooleanField, EmailField
+from flask_wtf.file import FileField, FileAllowed
+from wtforms import StringField, PasswordField, SubmitField, BooleanField, EmailField, DateTimeField, TextAreaField, SelectField
 from wtforms.validators import DataRequired, Length, EqualTo, Email, ValidationError
-from website.models import User
+from flask_login import current_user
+from website.models import User, Sport
 
 class RegistrationForm(FlaskForm):
 	name = StringField('Name',
@@ -27,3 +29,38 @@ class LoginForm(FlaskForm):
 				validators=[DataRequired()])
 	remember = BooleanField('Remember Me')
 	submit = SubmitField('Login')
+
+
+
+class UpdateAccountForm(FlaskForm):
+	name = StringField('Name',
+				validators=[DataRequired(), Length(min=2, max=20)])
+	email = EmailField('E-mail Adress',
+				validators=[DataRequired(), Email()])
+	picture = FileField('Profile Picture',
+					validators=[FileAllowed(['jpg', 'png'])])
+	submit = SubmitField('Update')
+
+	def validate_email(self, email):
+		if email.data != current_user.email:
+			user = User.query.filter_by(email=email.data).first()
+			if user:
+				raise ValidationError('This e-mail is already been used')
+
+
+class CreateMatchForm(FlaskForm):
+
+    title = StringField('Title',
+    			validators=[DataRequired(), Length(min=2, max=50)])
+    description = TextAreaField('Description')
+    # "%m/%d/%Y, %H:%M"
+    # DATA ESTA DANDO BO, PQP
+    #date = StringField('Date')
+    location = StringField('Location', validators=[Length(min=2, max=50)])
+
+    sport_id = SelectField('Sport', choices=[(s.id, s.name) for s 
+							in Sport.query.order_by('name')])
+
+    #user_id = current_user.id
+
+    submit = SubmitField('Create Match')

@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<section id="contact" class="contact">
+	<div class="container">
+
+<div class="row mt-5 justify-content-center" data-aos="fade-up">
+      <div class="col-lg-10">
+        <form action="" method="POST">
+        	{{ form.hidden_tag() }}
+        <div class="row">
+            <div class="col-md-8 form-group">
+            {{ form.title.label }}
+
+		        {% if form.title.errors %}
+		          {{ form.title(class="form-control form-control-lg is-invalid") }}
+		          <div class="invalid-feedback">
+		            {% for error in form.title.errors %}
+		            <span> {{ error }} </span>
+		            {% endfor %}
+		          </div>
+		        {% else %}
+		          {{ form.title(class="form-control") }}
+		        {% endif %}
+          </div>
+          <!--
+          <div class="col-md-4 form-group">
+          	{{ form.date.label }}
+          	{{ form.date(class="form-control") }}
+          </div> -->
+          <div class="row mt-3">
+            <div class="col-md-6 form-group">
+              {{ form.location.label }}
+
+		        {% if form.location.errors %}
+		          {{ form.location(class="form-control form-control-lg is-invalid") }}
+		          <div class="invalid-feedback">
+		            {% for error in form.location.errors %}
+		            <span> {{ error }} </span>
+		            {% endfor %}
+		          </div>
+		        {% else %}
+		          {{ form.location(class="form-control") }}
+		        {% endif %}
+            </div>
+            <div class="col-md-6 form-group">
+            	{{ form.sport_id.label }}
+
+		        {% if form.sport_id.errors %}
+		          {{ form.sport_id(class="form-control form-control-lg is-invalid") }}
+		          <div class="invalid-feedback">
+		            {% for error in form.sport_id.errors %}
+		            <span> {{ error }} </span>
+		            {% endfor %}
+		          </div>
+		        {% else %}
+		          {{ form.sport_id(class="form-select") }}
+		        {% endif %}
+            </div>
+          </div>
+          
+          <div class="form-group mt-3 mb-3">
+            {{ form.description.label }}
+
+		        {% if form.description.errors %}
+		          {{ form.description(class="form-control form-control-lg is-invalid") }}
+		          <div class="invalid-feedback">
+		            {% for error in form.description.errors %}
+		            <span> {{ error }} </span>
+		            {% endfor %}
+		          </div>
+		        {% else %}
+		          {{ form.description(class="form-control") }}
+		        {% endif %}
+          </div>
+          <div class="text-center">
+          	{{ form.submit(class="btn btn-primary") }}
+      	</div>
+        </form>
+      </div>
+
+    </div>
+
+  </div>
+</section><!-- End Contact Section -->
+
+{% endblock content %}

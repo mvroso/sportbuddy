@@ -8,6 +8,7 @@ def load_user(user_id):
 
 # PROXIMOS PASSOS
 # CRIAR CLASSES EVENTO E INGRESSO
+# INSTALAR A CLASSE FLASK BOOTSTRAP DO VIDEO TEMPLATES E VER SE FAZ ALGUMA DIFERENCA
 
 # Class description
 class User(db.Model, UserMixin):
@@ -34,7 +35,7 @@ class User(db.Model, UserMixin):
     '''
 
     def __repr__(self):
-        return f"User('{self.name}', '{self.email}', '{self.image_file}')"
+        return f"User('{self.name}', '{self.email}', '{self.image_file}', '{self.role.name}')"
 
 '''
  ***** ISSO AQUI FOI SO PRA TESTAR, APAGAR DEPOIS *****
@@ -62,7 +63,7 @@ class Role(db.Model):
     users = db.relationship('User', backref='role', lazy=True)
 
     def __repr__(self):
-        return f"Role('{self.name}')"
+        return f"Role('{self.id}', '{self.name}')"
 
 
 # Class description
@@ -75,7 +76,7 @@ class Match(db.Model):
     date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
     # ***** MUDAR PARA UM PONTO GEOGRAFICO DEPOIS ?????? *****
-    location = db.Column(db.String(50), nullable=False)
+    location = db.Column(db.String(50), nullable=False, default='Torino')
 
     # foreign key = Sport
     sport_id = db.Column(db.Integer, db.ForeignKey('sport.id'), nullable=False)
@@ -84,7 +85,7 @@ class Match(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
     def __repr__(self):
-        return f"Match('{self.title}')"
+        return f"Match('{self.title}', '{self.date}')"
 
 # Class description
 class Sport(db.Model):
@@ -97,7 +98,7 @@ class Sport(db.Model):
     matches = db.relationship('Match', backref='sport', lazy=True)
 
     def __repr__(self):
-        return f"Role('{self.name}')"
+        return f"Sport('{self.name}')"
 
 
 
