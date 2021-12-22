@@ -1,3 +1,4 @@
 # GIT IGNORE FILES
 **/venv
 **/__pycache__
+site.db
