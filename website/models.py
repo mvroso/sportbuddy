@@ -19,6 +19,9 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(30), nullable=False)
 
+    # Choices (Male = 1, Female = 2, Not applicable = 3)
+    gender = db.Column(db.Integer, nullable=False, default=1)
+
     # user image hash
     image_file = db.Column(db.String(20), nullable=False, default='default.jpg')
 
@@ -65,6 +68,21 @@ class Role(db.Model):
     def __repr__(self):
         return f"Role('{self.id}', '{self.name}')"
 
+'''
+# Class description
+# Male = 1, Female = 2, Neutral = 3, Not applicable = 4
+class Gender(db.Model):
+    # primary key
+    id = db.Column(db.Integer, primary_key=True)
+
+    name = db.Column(db.String(30), unique=True, nullable=False)
+
+    # relationship = Role | one to Many | User
+    users = db.relationship('User', backref='gender', lazy=True)
+
+    def __repr__(self):
+        return f"Gender('{self.id}', '{self.name}')"
+'''
 
 # Class description
 class Match(db.Model):

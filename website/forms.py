@@ -11,6 +11,10 @@ class RegistrationForm(FlaskForm):
 				validators=[DataRequired(), Length(min=2, max=20)])
 	email = EmailField('E-mail Adress',
 				validators=[DataRequired(), Email()])
+	gender = SelectField('Gender',
+				validators=[DataRequired()],
+				choices=[(1, "Male"), (2, "Female"),
+						(3, "Not applicable")])
 	password = PasswordField('Password',
 				validators=[DataRequired()])
 	confirm_password = PasswordField('Confirm Password',
@@ -59,7 +63,9 @@ class CreateMatchForm(FlaskForm):
 
     location = StringField('Location', validators=[Length(min=2, max=50)])
 
-    sport_id = SelectField('Sport', choices=[(s.id, s.name) for s 
+    sport_id = SelectField('Sport', 
+    			validators=[DataRequired()],
+    			choices=[(s.id, s.name) for s 
 							in Sport.query.order_by('name')])
 
     #user_id = current_user.id

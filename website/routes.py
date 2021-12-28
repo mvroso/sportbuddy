@@ -1,5 +1,6 @@
 import os, secrets
 from PIL import Image
+from datetime import datetime, timedelta
 from flask import render_template, url_for, flash, redirect, request
 from website import app, db, bcrypt
 from website.models import User, Role, Sport, Match
@@ -108,6 +109,8 @@ def account():
 @app.route("/match/create", methods=['GET', 'POST'])
 def create_match():
     form = CreateMatchForm()
+    # ***** RETIRAR ESSA LINHA UMA VEZ QUE O DATETIMEPICKER FOR ESCOLHIDO *****
+    form.date.data = datetime.today() +  timedelta(days=1)
     if form.validate_on_submit():
         flash('Your match has been created!', 'success')
         return redirect(url_for('index'))
@@ -122,6 +125,17 @@ def create_match():
 @app.route("/insertdata")
 def insertdata():
     '''
+    gender_1 = Gender(name='Male')
+    gender_2 = Gender(name='Female')
+    gender_3 = Gender(name='Neutral')
+    gender_4 = Gender(name='Not applicable')
+    db.session.add(gender_1)
+    db.session.add(gender_2)
+    db.session.add(gender_3)
+    db.session.add(gender_4)
+    db.session.commit()
+    '''
+    
     # Create three standard roles
     role_1 = Role(name='Common')
     role_2 = Role(name='Coach')
@@ -130,8 +144,8 @@ def insertdata():
     db.session.add(role_2)
     db.session.add(role_3)
     db.session.commit()
-    '''
-    '''
+    
+    
     # Create three standard sports
     sport_1 = Sport(name='Basketball')
     sport_2 = Sport(name='Tennis')
@@ -140,7 +154,7 @@ def insertdata():
     db.session.add(sport_2)
     db.session.add(sport_3)
     db.session.commit()
-    '''
+    
     '''
     # Create one standard match
     match_1 = Match(title='title', sport_id=1, user_id=1)
