@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<section id="contact" class="contact">
+	<div class="container">
+
+<div class="row mt-5 justify-content-center" data-aos="fade-up">
+      <div class="col-lg-10">
+        
+				<div class="blog-author d-flex align-items-center">
+              <div>
+                <h4>{{ match.title }}</h4>
+                <p>
+                  {{ match.date.strftime('%Y-%m-%d at %H:%M') }}
+                </p>
+                <p>
+                  {{ match.description }}
+                </p>
+                <p>
+                  {{ match.location }}
+                </p>
+                <p>
+                  {{ match.owner.name }}
+                </p>
+                <p>
+                  {{ match.sport.name }}
+                </p>
+              </div>
+            </div><!-- End blog author bio -->
+
+      </div>
+
+    </div>
+
+  </div>
+</section><!-- End Contact Section -->
+
+{% endblock content %}

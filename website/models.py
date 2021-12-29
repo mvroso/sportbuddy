@@ -103,7 +103,7 @@ class Match(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
     def __repr__(self):
-        return f"Match('{self.title}', '{self.date}')"
+        return f"Match('{self.title}', '{self.date}', '{self.sport.name}')"
 
 # Class description
 class Sport(db.Model):

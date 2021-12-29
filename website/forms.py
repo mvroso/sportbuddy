@@ -53,26 +53,32 @@ class UpdateAccountForm(FlaskForm):
 				raise ValidationError('This e-mail is already been used')
 
 
-class CreateMatchForm(FlaskForm):
+# Implementing MatchForm Mixin
+class MatchFormMixin():
 
-    title = StringField('Title',
-    			validators=[DataRequired(), Length(min=2, max=50)])
-    description = TextAreaField('Description')
+	title = StringField('Title',
+					validators=[DataRequired(), Length(min=2, max=50)])
+	description = TextAreaField('Description')
 
-    date = DateTimeField('Match Date', format='%Y-%m-%d %H:%M')#, render_kw={"placeholder": "test"})
+	date = DateTimeField('Match Date', format='%Y-%m-%d %H:%M:%S')#, render_kw={"placeholder": "test"})
 
-    location = StringField('Location', validators=[Length(min=2, max=50)])
+	location = StringField('Location', validators=[Length(min=2, max=50)])
 
-    sport_id = SelectField('Sport', 
-    			validators=[DataRequired()],
-    			choices=[(s.id, s.name) for s 
-							in Sport.query.order_by('name')])
+	sport_id = SelectField('Sport', validators=[DataRequired()])
 
-    #user_id = current_user.id
+	# Date validation
+	def validate_date(self, date):
+		if date.data < datetime.now():
+			raise ValidationError("The date cannot be in the past!")
+
+# Create new match Form
+class CreateMatchForm(FlaskForm, MatchFormMixin):
 
     submit = SubmitField('Create Match')
 
-    # Date validation
-    def validate_date(self, date):
-    	if date < datetime.date.today():
-    		raise ValidationError("The date cannot be in the past!")
+# Update match Form
+class UpdateMatchForm(FlaskForm, MatchFormMixin):
+
+    submit = SubmitField('Update Match')
+
+    

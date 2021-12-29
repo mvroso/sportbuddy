@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from flask import render_template, url_for, flash, redirect, request
 from website import app, db, bcrypt
 from website.models import User, Role, Sport, Match
-from website.forms import RegistrationForm, LoginForm, UpdateAccountForm, CreateMatchForm
+from website.forms import RegistrationForm, LoginForm, UpdateAccountForm, CreateMatchForm, UpdateMatchForm
 from flask_login import login_user, logout_user, current_user, login_required
 
 @app.route("/")
@@ -80,8 +80,8 @@ def save_picture(form_picture):
     return picture_fn
 
 
-@login_required
 @app.route("/account", methods=['GET', 'POST'])
+@login_required
 def account():
     form = UpdateAccountForm()
     if form.validate_on_submit():
@@ -105,18 +105,126 @@ def account():
                         image_file=image_file, form=form)
 
 # Create a new match
-@login_required
 @app.route("/match/create", methods=['GET', 'POST'])
+@login_required
 def create_match():
     form = CreateMatchForm()
-    # ***** RETIRAR ESSA LINHA UMA VEZ QUE O DATETIMEPICKER FOR ESCOLHIDO *****
-    form.date.data = datetime.today() +  timedelta(days=1)
+    form.sport_id.choices = [(row.id, row.name) for row 
+                                in Sport.query.order_by('name')]
+    if request.method == 'GET':        
+        # ***** RETIRAR ESSA LINHA UMA VEZ QUE O DATETIMEPICKER FOR ESCOLHIDO *****
+        form.date.data = datetime.today() +  timedelta(days=1)
+    elif request.method == 'POST':
+        if form.validate_on_submit():
+            match = Match(title=form.title.data,
+                description=form.description.data,
+                date=form.date.data, location=form.location.data,
+                sport_id=form.sport_id.data,
+                owner=current_user)
+
+            db.session.add(match)
+            db.session.commit()
+
+            flash('Your match has been created!', 'success')
+            return redirect(url_for('index'))
+        else:
+            flash('Your match has not been created! Check your inputs', 'danger')
+    return render_template('create_match.html', title='New Match', form=form, legend='Create')
+
+
+# Find an existing match
+@app.route("/match/find")
+@login_required
+def find_match():
+    matches = Match.query.all()
+    return render_template('find_match.html', title='Find Match', matches=matches)
+
+# Show details of a single match
+@app.route("/match/<int:match_id>/details")
+@login_required
+def details_match(match_id):
+    match = Match.query.get_or_404(match_id)
+    return render_template('details_match.html', title='Match Details', match=match)
+
+
+# Update a single match that you own
+@app.route("/match/<int:match_id>/update", methods=['GET', 'POST'])
+@login_required
+def update_match(match_id):
+    match = Match.query.get_or_404(match_id)
+
+    if current_user != match.owner:
+        flash('You are not the owner of that match!', 'danger')
+        # from flask import abort
+        # abort(403) # 403 = forbidden access
+        return redirect(url_for('find_match'))
+    
+    form = UpdateMatchForm()
+    form.sport_id.choices = [(row.id, row.name) for row 
+                                in Sport.query.order_by('name')]
+
+    # Update match in database
     if form.validate_on_submit():
-        flash('Your match has been created!', 'success')
-        return redirect(url_for('index'))
-    else:
-        flash('Your match has been created!', 'danger')
-    return render_template('create_match.html', title='New Match', form=form)
+        match.title = form.title.data
+        match.description = form.description.data
+        match.date = form.date.data
+        form.location.data = match.location
+        form.sport_id.data = match.sport.id
+        db.session.commit()
+
+        flash('Your match has been updated!', 'success')
+        return redirect(url_for('details_match', match_id=match.id))
+
+    # Populate form
+    elif request.method == 'GET':
+        form.title.data = match.title
+        form.description.data = match.description
+        form.date.data = match.date
+        form.location.data = match.location
+        #form.sport_id.
+        print(form.sport_id) # RESOLVER ESSA BUCETA LOGO PELO AMOR DE DEUS
+
+    return render_template('update_match.html', title='Update Match', form=form, legend='Update', match=match)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
