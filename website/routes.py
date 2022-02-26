@@ -2,10 +2,12 @@ import os, secrets
 from PIL import Image
 from datetime import datetime, timedelta
 from flask import render_template, url_for, flash, redirect, request
-from website import app, db, bcrypt
+from website import app, db, bcrypt, mail
 from website.models import User, Role, Sport, Match
-from website.forms import RegistrationForm, LoginForm, UpdateAccountForm, CreateMatchForm, UpdateMatchForm
+from website.forms import (RegistrationForm, LoginForm, UpdateAccountForm, CreateMatchForm, 
+                        UpdateMatchForm, FilterMatchForm, RequestResetForm, ResetPasswordForm)
 from flask_login import login_user, logout_user, current_user, login_required
+from flask_mail import Message
 
 @app.route("/")
 @app.route("/index")
@@ -22,21 +24,23 @@ def register():
         return redirect(url_for('index'))
 
     form = RegistrationForm()
-    # Registration form is valid
-    if form.validate_on_submit():
-        hashed_password = bcrypt.generate_password_hash(
-                                form.password.data).decode('utf-8')
-        user = User(name=form.name.data, email=form.email.data,
-                password=hashed_password)
 
-        # Add user to database
-        db.session.add(user)
-        db.session.commit()
+    if request.method == 'POST': 
+        # Registration form is valid
+        if form.validate_on_submit():
+            hashed_password = bcrypt.generate_password_hash(
+                                    form.password.data).decode('utf-8')
+            user = User(name=form.name.data, email=form.email.data,
+                    password=hashed_password)
 
-        flash('Your account has been successfully created!', 'success')
-        return redirect(url_for('login'))
-    else:
-        flash('Your account was not created. Check your inputs!', 'danger')
+            # Add user to database
+            db.session.add(user)
+            db.session.commit()
+
+            flash('Your account has been successfully created!', 'success')
+            return redirect(url_for('login'))
+        else:
+            flash('Your account was not created. Check your inputs!', 'danger')
 
     return render_template('register.html',
                         title='Register', form=form)
@@ -51,17 +55,70 @@ def login():
         user = User.query.filter_by(email=form.email.data).first()
         if user and bcrypt.check_password_hash(
                             user.password, form.password.data):
-            login_user(user, remember=form.remember.data)
+            login_user(user, remember=True)
             return redirect(url_for('index'))
         else:
             flash('Login unsuccessful. Check your email and password!', 'danger')
     return render_template('login.html',
                         title='Login', form=form)
 
+
 @app.route("/logout")
 def logout():
     logout_user()
     return redirect(url_for('login'))
+
+def send_reset_email(user):
+    token = user.get_reset_token()
+    msg = Message('Password Reset Request',
+            sender='xzgigabytexz@gmail.com', recipients=[user.email])
+
+    msg.body = f'''To reset your password, visit the following link:
+{ url_for('reset_password', token=token, _external=True) }
+
+If you did not make this request then simply ignore this email.
+'''
+    mail.send(msg)
+
+@app.route("/reset_password_request", methods=['GET', 'POST'])
+def reset_password_request():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+
+    form = RequestResetForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        send_reset_email(user)
+        flash('An email has been sent with instructions to reset your password', 'info')
+        return redirect(url_for('login'))
+
+    return render_template('reset_password_request.html', title='Reset Password Request', form=form)
+
+
+@app.route("/reset_password/<token>", methods=['GET', 'POST'])
+def reset_password(token):
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+
+    user = User.verify_reset_token(token)
+    if user is None:
+        flash('The token is invalid or expired', 'warning')
+        return redirect(url_for('reset_request'))
+
+    form = ResetPasswordForm()
+    if form.validate_on_submit():
+            hashed_password = bcrypt.generate_password_hash(
+                                    form.password.data).decode('utf-8')
+
+            user.password = hashed_password
+            db.session.commit()
+
+            flash('Your password has been updated!', 'success')
+            return redirect(url_for('login'))
+
+    return render_template('reset_password.html', title='Reset Password', form=form)
+
+
 
 # Save user uploaded picture in /static/img file
 def save_picture(form_picture):
@@ -132,12 +189,24 @@ def create_match():
     return render_template('create_match.html', title='Create Match', form=form, legend='Create')
 
 
-# Find an existing match
-@app.route("/match/find")
+# Show a list of existing matches
+@app.route("/match/find", methods=['GET', 'POST'])
 @login_required
 def find_match():
-    matches = Match.query.all()
+    page = request.args.get('page', 1, type=int)
+    matches = Match.query.filter(Match.date >= datetime.now()) \
+        .order_by(Match.date.asc()).paginate(page=page, per_page=2)
     return render_template('find_match.html', title='Find Match', matches=matches)
+
+# Filter a list of existing matches
+@app.route("/match/filter", methods=['GET', 'POST'])
+@login_required
+def filter_match():
+    form = FilterMatchForm()
+    #sport_list = ()
+    #form.sport_id.choices = # CONTINUAR A PARTIR DAQUI
+    return render_template('find_match.html', title='Find Match', matches=matches)
+
 
 # Show details of a single match
 @app.route("/match/<int:match_id>/details")
@@ -242,6 +311,11 @@ def delete_match(match_id):
 
 
 
+@app.route("/teste")
+def teste():
+    print (os.getenv('MAIL_PASS'))
+    print (os.environ.get("SECRET_KEY"))
+    return redirect(url_for('index'))
 
 
 
@@ -276,10 +350,18 @@ def insertdata():
     # Create three standard sports
     sport_1 = Sport(name='Basketball')
     sport_2 = Sport(name='Tennis')
-    sport_3 = Sport(name='Chess')
+    sport_3 = Sport(name='Fencing')
+    sport_4 = Sport(name='Judo')
+    sport_5 = Sport(name='Volleyball')
+    sport_6 = Sport(name='Boxing')
+
     db.session.add(sport_1)
     db.session.add(sport_2)
     db.session.add(sport_3)
+    db.session.add(sport_4)
+    db.session.add(sport_5)
+    db.session.add(sport_6)
+
     db.session.commit()
     
     '''

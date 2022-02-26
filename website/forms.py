@@ -32,10 +32,24 @@ class LoginForm(FlaskForm):
 				validators=[DataRequired(), Email()])
 	password = PasswordField('Password',
 				validators=[DataRequired()])
-	remember = BooleanField('Remember Me')
 	submit = SubmitField('Login')
 
+class RequestResetForm(FlaskForm):
+	email = StringField('email',
+				validators=[DataRequired(), Email()])
+	submit = SubmitField('Request Password Reset')
 
+	def validate_email(self, email):
+		user = User.query.filter_by(email=email.data).first()
+		if user is None:
+			raise ValidationError('This e-mail is not linked to any account')
+
+class ResetPasswordForm(FlaskForm):
+	password = PasswordField('Password',
+				validators=[DataRequired()])
+	confirm_password = PasswordField('Confirm Password',
+				validators=[DataRequired(), EqualTo('password')])
+	submit = SubmitField('Reset Password')
 
 class UpdateAccountForm(FlaskForm):
 	name = StringField('Name',
@@ -81,4 +95,8 @@ class UpdateMatchForm(FlaskForm, MatchFormMixin):
 
     submit = SubmitField('Update Match')
 
-    
+
+# Filter match Form
+class FilterMatchForm(FlaskForm, MatchFormMixin):
+
+	submit = SubmitField('Filter Match')
