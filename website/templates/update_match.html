@@ -6,7 +6,8 @@
 
 <div class="row mt-5 justify-content-center" data-aos="fade-up">
       <div class="col-lg-10">
-        
+        <form action="" method="POST">
+          {{ form.hidden_tag() }}
 				<div class="blog-author d-flex align-items-center">
               <div>
                 <h4>{{ form.title }}</h4>
@@ -23,11 +24,10 @@
                   {{ current_user.name }}
                 </p>
                   {{ form.sport_id(class="form-select") }}
-                  {{ match.sport }}
               </div>
               {{ form.submit }}
             </div><!-- End blog author bio -->
-
+          </form>
       </div>
 
     </div>

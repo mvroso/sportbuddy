@@ -129,7 +129,7 @@ def create_match():
             return redirect(url_for('index'))
         else:
             flash('Your match has not been created! Check your inputs', 'danger')
-    return render_template('create_match.html', title='New Match', form=form, legend='Create')
+    return render_template('create_match.html', title='Create Match', form=form, legend='Create')
 
 
 # Find an existing match
@@ -160,32 +160,51 @@ def update_match(match_id):
         return redirect(url_for('find_match'))
     
     form = UpdateMatchForm()
-    form.sport_id.choices = [(row.id, row.name) for row 
+    # workaround for listing the current sport first
+    sport_list = [(row.id, row.name) for row 
                                 in Sport.query.order_by('name')]
+    sport_list.remove((match.sport.id, match.sport.name))
+    sport_list.insert(0, (match.sport.id, match.sport.name))
+    form.sport_id.choices = sport_list
 
-    # Update match in database
+    # Update match in database (method = POST)
     if form.validate_on_submit():
         match.title = form.title.data
         match.description = form.description.data
         match.date = form.date.data
-        form.location.data = match.location
-        form.sport_id.data = match.sport.id
+        match.location = form.location.data
+        match.sport_id = form.sport_id.data
         db.session.commit()
 
         flash('Your match has been updated!', 'success')
         return redirect(url_for('details_match', match_id=match.id))
 
-    # Populate form
+    # Populate form (method = GET)
     elif request.method == 'GET':
         form.title.data = match.title
         form.description.data = match.description
         form.date.data = match.date
         form.location.data = match.location
-        #form.sport_id.
-        print(form.sport_id) # RESOLVER ESSA BUCETA LOGO PELO AMOR DE DEUS
 
     return render_template('update_match.html', title='Update Match', form=form, legend='Update', match=match)
 
+
+# Delete a single match that you own
+@app.route("/match/<int:match_id>/delete", methods=['POST'])
+@login_required
+def delete_match(match_id):
+    match = Match.query.get_or_404(match_id)
+
+    if current_user != match.owner:
+        flash('You are not the owner of that match!', 'danger')
+        # from flask import abort
+        # abort(403) # 403 = forbidden access
+        return redirect(url_for('find_match'))
+
+    db.session.delete(match)
+    db.session.commit()
+    flash('Your match has been deleted!', 'success')
+    return redirect(url_for('find_match'))
 
 
 
