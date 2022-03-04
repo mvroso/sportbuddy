@@ -78,9 +78,9 @@
           <li><a href="{{ url_for('register') }}">Register</a></li>
           <li><a href="portfolio.html">Portfolio</a></li>
           <li><a href="blog.html">Blog</a></li>
-          <li class="dropdown"><a href="#"><span>Drop Down</span> <i class="bi bi-chevron-down"></i></a>
+          <li class="dropdown"><a href="#"><span>Match</span> <i class="bi bi-chevron-down"></i></a>
             <ul>
-              <li><a href="#">Drop Down 1</a></li>
+              <li><a href="{{ url_for('create_match') }}">Create Match</a></li>
               <li class="dropdown"><a href="#"><span>Deep Drop Down</span> <i class="bi bi-chevron-right"></i></a>
                 <ul>
                   <li><a href="#">Deep Drop Down 1</a></li>
@@ -90,7 +90,7 @@
                   <li><a href="#">Deep Drop Down 5</a></li>
                 </ul>
               </li>
-              <li><a href="#">Drop Down 2</a></li>
+              <li><a href="{{ url_for('find_match') }}">Find Match</a></li>
               <li><a href="#">Drop Down 3</a></li>
               <li><a href="#">Drop Down 4</a></li>
             </ul>

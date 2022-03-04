@@ -3,11 +3,12 @@ from PIL import Image
 from datetime import datetime, timedelta
 from flask import render_template, url_for, flash, redirect, request
 from website import app, db, bcrypt, mail
-from website.models import User, Role, Sport, Match
+from website.models import User, Role, Sport, Match, Timeperiod
 from website.forms import (RegistrationForm, LoginForm, UpdateAccountForm, CreateMatchForm, 
                         UpdateMatchForm, FilterMatchForm, RequestResetForm, ResetPasswordForm)
 from flask_login import login_user, logout_user, current_user, login_required
 from flask_mail import Message
+from sqlalchemy import or_, and_, func
 
 @app.route("/")
 @app.route("/index")
@@ -71,7 +72,7 @@ def logout():
 def send_reset_email(user):
     token = user.get_reset_token()
     msg = Message('Password Reset Request',
-            sender='xzgigabytexz@gmail.com', recipients=[user.email])
+            sender='noreply@sportbuddy.com', recipients=[user.email])
 
     msg.body = f'''To reset your password, visit the following link:
 { url_for('reset_password', token=token, _external=True) }
@@ -103,7 +104,7 @@ def reset_password(token):
     user = User.verify_reset_token(token)
     if user is None:
         flash('The token is invalid or expired', 'warning')
-        return redirect(url_for('reset_request'))
+        return redirect(url_for('reset_password_request'))
 
     form = ResetPasswordForm()
     if form.validate_on_submit():
@@ -170,13 +171,15 @@ def create_match():
                                 in Sport.query.order_by('name')]
     if request.method == 'GET':        
         # ***** RETIRAR ESSA LINHA UMA VEZ QUE O DATETIMEPICKER FOR ESCOLHIDO *****
-        form.date.data = datetime.today() +  timedelta(days=1)
+        #form.date.data = datetime.today() +  timedelta(days=1)
+        pass
     elif request.method == 'POST':
         if form.validate_on_submit():
             match = Match(title=form.title.data,
                 description=form.description.data,
                 date=form.date.data, location=form.location.data,
                 sport_id=form.sport_id.data,
+                time_period_id=form.time_period.data,
                 owner=current_user)
 
             db.session.add(match)
@@ -186,16 +189,56 @@ def create_match():
             return redirect(url_for('index'))
         else:
             flash('Your match has not been created! Check your inputs', 'danger')
-    return render_template('create_match.html', title='Create Match', form=form, legend='Create')
+    return render_template('create_update_match.html', title='Create Match', form=form, legend='Create')
 
 
 # Show a list of existing matches
-@app.route("/match/find", methods=['GET', 'POST'])
+@app.route("/match/find") #sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss
+@app.route("/match/find/<int:sport_id>/<int:time_period_id>/<date>/<title>/<location>/<description>")
 @login_required
-def find_match():
+def find_match(sport_id=0, time_period_id=0, date=None, title=None, location=None, description=None):
     page = request.args.get('page', 1, type=int)
-    matches = Match.query.filter(Match.date >= datetime.now()) \
-        .order_by(Match.date.asc()).paginate(page=page, per_page=2)
+
+    # Builds the search query
+    # FIND MATCH IS STILL NOT WORKING PROPERLY GRR!!!!!!!!!!!!!!!!!!!!!!!!!!
+    #subquery = 
+    #query = and_(Match.date >= datetime.now(),
+    #    func.count(Match.players) < Match.players_maxnumber)
+    query = or_(Match.date >= datetime.now(), 0)
+
+    if sport_id != 0:
+        query = and_(query, Match.sport_id == sport_id)
+    
+    if time_period_id != 0:
+        query = and_(query, Match.time_period_id == time_period_id)
+
+    if date != None:
+        query = and_(query, Match.date == date)
+
+    if title != None:
+        query = and_(query, Match.title.like("%" + title + "%"))
+        '''
+    if location != None or location == "":
+        query = and_(query, Match.location.like('%' + str(location) + '%'))
+
+    if description != None or description != "":
+        query = and_(query, Match.description.like('%' + str(description) + '%'))
+    '''
+    '''
+    if sport_id == None:
+        matches = Match.query.filter(Match.date >= datetime.now()) \
+            .order_by(Match.date.asc()).paginate(page=page, per_page=2)
+    else:
+        matches = Match.query.filter(Match.date >= datetime.now(), \
+            Match.sport_id == sport_id) \
+            .order_by(Match.date.asc()).paginate(page=page, per_page=2)
+    '''
+    matches = Match.query.filter(query) \
+            .order_by(Match.date.asc()) \
+            .paginate(page=page, per_page=2)
+
+    print("teste " + str(title))
+
     return render_template('find_match.html', title='Find Match', matches=matches)
 
 # Filter a list of existing matches
@@ -203,9 +246,22 @@ def find_match():
 @login_required
 def filter_match():
     form = FilterMatchForm()
-    #sport_list = ()
-    #form.sport_id.choices = # CONTINUAR A PARTIR DAQUI
-    return render_template('find_match.html', title='Find Match', matches=matches)
+
+    sport_list = [(row.id, row.name) for row 
+                                in Sport.query.order_by('name')]
+    sport_list.insert(0, (0, "All Sports"))
+    form.sport_id.choices = sport_list
+    time_period_list = [(0, "All Periods"), (1, "Morning"),
+                        (2, "Afternoon"), (3, "Evening"),
+                        (4, "Night")]
+    form.time_period.choices = time_period_list
+
+    if request.method == 'POST':
+        if form.validate_on_submit():
+            return redirect(url_for('find_match', sport_id=form.sport_id.data, time_period_id=form.time_period.data,
+                    date=form.date.data, title=form.title.data))#, location=form.location.data, description=form.description.data))
+
+    return render_template('create_update_match.html', title='Filter Match', form=form)
 
 
 # Show details of a single match
@@ -213,8 +269,87 @@ def filter_match():
 @login_required
 def details_match(match_id):
     match = Match.query.get_or_404(match_id)
-    return render_template('details_match.html', title='Match Details', match=match)
 
+    # Join Button
+    join_flag = True
+    player_number = len(match.players) + 1 # +1 is the owner
+    if current_user in match.players or player_number >= match.players_maxnumber:
+        join_flag = False
+
+    return render_template('details_match.html', title='Match Details', match=match, flag=join_flag, player_number=player_number)
+
+# Join a match as a player
+@app.route("/match/<int:match_id>/join", methods=['POST'])
+@login_required
+def join_match(match_id):
+    match = Match.query.get_or_404(match_id)
+
+    if current_user == match.owner:
+        flash('You have already joined!', 'danger')
+        # from flask import abort
+        # abort(403) # 403 = forbidden access
+        return redirect(url_for('details_match', match_id=match.id))
+
+    if len(match.players) >= match.players_maxnumber:
+        flash('This match is full!', 'danger')
+        # from flask import abort
+        # abort(403) # 403 = forbidden access
+        return redirect(url_for('details_match', match_id=match.id))
+
+    match.players.append(current_user)
+    db.session.commit()
+
+    flash('You have joined!', 'success')
+    return redirect(url_for('details_match', match_id=match.id))
+
+# Quit a match as a player
+@app.route("/match/<int:match_id>/quit", methods=['POST'])
+@login_required
+def quit_match(match_id):
+    match = Match.query.get_or_404(match_id)
+
+    if current_user == match.owner:
+        flash('You cannot quit a match that you have created!', 'danger')
+        # from flask import abort
+        # abort(403) # 403 = forbidden access
+        return redirect(url_for('details_match', match_id=match.id))
+
+    if current_user not in match.players:
+        flash('You are not in this match!', 'danger')
+        # from flask import abort
+        # abort(403) # 403 = forbidden access
+        return redirect(url_for('details_match', match_id=match.id))
+
+    match.players.remove(current_user)
+    db.session.commit()
+
+    flash('You have quit the match!', 'success')
+    return redirect(url_for('details_match', match_id=match.id))
+
+# Remove a player from a match
+@app.route("/match/<int:match_id>/remove/<int:player_id>", methods=['POST'])
+@login_required
+def remove_player_match(match_id, player_id):
+    match = Match.query.get_or_404(match_id)
+    player = User.query.get_or_404(player_id)
+
+    if current_user != match.owner:
+        flash('You are not allowed to remove other players!', 'danger')
+        # from flask import abort
+        # abort(403) # 403 = forbidden access
+        return redirect(url_for('details_match', match_id=match.id))
+
+    if player not in match.players:
+        flash('This player is not in this match!', 'danger')
+        # from flask import abort
+        # abort(403) # 403 = forbidden access
+        return redirect(url_for('details_match', match_id=match.id))
+
+    match.players.remove(player)
+    db.session.commit()
+
+    flash('You have removed the player ' + player.name + ' from the match!', 'success')
+    return redirect(url_for('details_match', match_id=match.id))
 
 # Update a single match that you own
 @app.route("/match/<int:match_id>/update", methods=['GET', 'POST'])
@@ -235,6 +370,12 @@ def update_match(match_id):
     sport_list.remove((match.sport.id, match.sport.name))
     sport_list.insert(0, (match.sport.id, match.sport.name))
     form.sport_id.choices = sport_list
+    # same for time period
+    time_period_list = [(1, "Morning"), (2, "Afternoon"),
+                        (3, "Evening"), (4, "Night")]
+    time_period_list.remove((match.timeperiod.id, match.timeperiod.name))
+    time_period_list.insert(0, (match.timeperiod.id, match.timeperiod.name))
+    form.time_period.choices = time_period_list
 
     # Update match in database (method = POST)
     if form.validate_on_submit():
@@ -243,6 +384,7 @@ def update_match(match_id):
         match.date = form.date.data
         match.location = form.location.data
         match.sport_id = form.sport_id.data
+        match.time_period_id = form.time_period.data
         db.session.commit()
 
         flash('Your match has been updated!', 'success')
@@ -255,7 +397,7 @@ def update_match(match_id):
         form.date.data = match.date
         form.location.data = match.location
 
-    return render_template('update_match.html', title='Update Match', form=form, legend='Update', match=match)
+    return render_template('create_update_match.html', title='Update Match', form=form, legend='Update', match=match)
 
 
 # Delete a single match that you own
@@ -337,6 +479,17 @@ def insertdata():
     db.session.commit()
     '''
     
+    # Create three timeperiods
+    timeperiod_1 = Timeperiod(name='Morning')
+    timeperiod_2 = Timeperiod(name='Afternoon')
+    timeperiod_3 = Timeperiod(name='Evening')
+    timeperiod_4 = Timeperiod(name='Night')
+    db.session.add(timeperiod_1)
+    db.session.add(timeperiod_2)
+    db.session.add(timeperiod_3)
+    db.session.add(timeperiod_4)
+    db.session.commit()
+
     # Create three standard roles
     role_1 = Role(name='Common')
     role_2 = Role(name='Coach')

@@ -1,50 +1,135 @@
 {% extends 'base.html' %}
 {% block content %}
 
-<section id="contact" class="contact">
-	<div class="container">
+<!-- ======= Blog Single Section ======= -->
+<section id="blog" class="blog">
+  <div class="container" data-aos="fade-up">
 
-<div class="row mt-5 justify-content-center" data-aos="fade-up">
-      <div class="col-lg-10">
-        
-				<div class="blog-author d-flex align-items-center">
-              <div>
-                <h4>{{ match.title }}</h4>
-                <p>
-                  {{ match.date.strftime('%Y-%m-%d at %H:%M') }}
-                </p>
-                <p>
-                  {{ match.description }}
-                </p>
-                <p>
-                  {{ match.location }}
-                </p>
-                <p>
-                  {{ match.owner.name }}
-                </p>
-                <p>
-                  {{ match.sport.name }}
-                </p>
-              </div>
-              {% if current_user == match.owner  %}
-                <div class="text-center">
-                  <a role="button" class="btn btn-secondary" href="{{ url_for('update_match', match_id=match.id) }}">Update</a>
-                </div>
-                <!-- Button trigger modal -->
-                <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
-                  Delete
-                </button>
+    <div class="row">
+
+      <article class="entry entry-single">
+
+        <div class="entry-img">
+          <iframe style="border:0; width: 100%; height: 350px;" src="https://maps.google.com/maps?q={{ match.location | replace(" ", "+") }}&t=&z=13&ie=UTF8&iwloc=&output=embed" frameborder="0" allowfullscreen></iframe>
+        </div>
+        <h2 class="entry-title">
+          {{ match.title }}
+        </h2>
+
+        <div class="entry-meta">
+          <ul>
+            <li class="d-flex align-items-center">
+              <i class="bi bi-person"></i>
+              {{ match.owner.name }}
+            </li>
+            <li class="d-flex align-items-center">
+              <i class="bi bi-calendar-date"></i>
+              {{ match.date.strftime('%d %b %Y') }}
+            </li>
+            <li class="d-flex align-items-center">
+              {% if match.timeperiod.name == "Morning" %}
+                <i class="bi bi-brightness-alt-high"></i>
+              {% elif match.timeperiod.name == "Afternoon"%}
+                <i class="bi bi-brightness-high"></i>
+              {% elif match.timeperiod.name == "Evening"%}
+                <i class="bi bi-sunset"></i>
+              {% else %}
+                <i class="bi bi-moon"></i>
               {% endif %}
-            </div><!-- End blog author bio -->
+              {{ match.timeperiod.name }}
+            </li>
+            <li class="d-flex align-items-center">
+              <i class="bi bi-people"></i>
+              {{ match.sport.name }} - {{ player_number }}/{{ match.players_maxnumber }}
+            </li>
+          </ul>
+        </div>
+        <div class="entry-content">
+          <div class="row">
+            <p>
+              {{ match.description }}
+            </p>
+          </div>
+          <div class="row">
+            <div class="col-md-12">
+              
+            <table class="table table-hover table-sm caption-top">
+              <caption>List of players</caption>
+              <thead>
+                <tr>
+                  <th scope="col">#</th>
+                  <th scope="col">Name</th>
+                  {% if current_user == match.owner %}
+                    <th scope="col">Remove</th>
+                  {% elif current_user in match.players %}
+                    <th scope="col">Quit</th>
+                  {% endif %}
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">1</th>
+                  <td colspan="2">{{ match.owner.name }}</td>
+                </tr>
+                {% for player in match.players %}
+                <tr>
+                  <th scope="row">{{ loop.index + 1 }}</th>
+                  <td {% if current_user != match.owner and current_user != player %} colspan="2" {% endif %}>{{ player.name }}</td>
+                  {% if current_user == match.owner %}
+                    <td>
+                      <form id="remove_player{{ player.id }}" action="{{ url_for('remove_player_match', match_id=match.id, player_id = player.id) }}" method="POST">
+                        <a href="javascript:{}" onclick="document.getElementById('remove_player{{ player.id }}').submit(); return false;">
+                          <i class="bi bi-x-square"></i>
+                        </a>
+                      </form>
+                    </td>
+                  {% elif current_user == player %}
+                    <td>
+                      <form id="quit" action="{{ url_for('quit_match', match_id=match.id) }}" method="POST">
+                        <a href="javascript:{}" onclick="document.getElementById('quit').submit(); return false;">
+                          <i class="bi bi-x-square"></i>
+                        </a>
+                      </form>
+                    </td>
+                  {% endif %}
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+            </div>
+          </div>          
+        </div>
+        <div class="entry-footer">
+          <i class="bi bi-arrow-return-right"></i>
+          <ul class="cats">
+            <li><a href="{{ url_for('find_match') }}">Find another Match</a></li>
+          </ul>
+          {% if current_user == match.owner  %}
+            <i class="bi bi-arrow-repeat"></i>
+            <ul class="cats">
+              <li><a href="{{ url_for('update_match', match_id=match.id) }}">Update Match</a></li>
+            </ul>
+            <i class="bi bi-trash"></i>
+            <ul class="cats">
+              <li><a href="#" data-bs-toggle="modal" data-bs-target="#deleteModal">Delete Match</a></li>
+            </ul>
+          {% elif flag %}
+            <i class="bi bi-plus-square"></i>
+            <ul class="cats">
+              <li>
+                <form id="join" action="{{ url_for('join_match', match_id=match.id) }}" method="POST">
+                  <a href="javascript:{}" onclick="document.getElementById('join').submit(); return false;">Join Match</a>
+                </form>
+              </li>
+            </ul>
+          {% endif %}
+          
+        </div>
 
-      </div>
-
+      </article><!-- End blog entry -->
     </div>
-
   </div>
-</section><!-- End Contact Section -->
-
-
+</section>
 
 <!-- Modal -->
 <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">

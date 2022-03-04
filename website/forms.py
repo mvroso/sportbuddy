@@ -1,8 +1,8 @@
-from datetime import datetime
+from datetime import date as date_func
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
-from wtforms import StringField, PasswordField, SubmitField, BooleanField, EmailField, DateTimeField, TextAreaField, SelectField
-from wtforms.validators import DataRequired, Length, EqualTo, Email, ValidationError
+from wtforms import StringField, PasswordField, SubmitField, BooleanField, EmailField, DateField, TextAreaField, SelectField
+from wtforms.validators import DataRequired, Length, EqualTo, Email, ValidationError, Optional
 from flask_login import current_user
 from website.models import User, Sport
 
@@ -28,7 +28,7 @@ class RegistrationForm(FlaskForm):
 
 
 class LoginForm(FlaskForm):
-	email = StringField('email',
+	email = StringField('Email',
 				validators=[DataRequired(), Email()])
 	password = PasswordField('Password',
 				validators=[DataRequired()])
@@ -74,7 +74,14 @@ class MatchFormMixin():
 					validators=[DataRequired(), Length(min=2, max=50)])
 	description = TextAreaField('Description')
 
-	date = DateTimeField('Match Date', format='%Y-%m-%d %H:%M:%S')#, render_kw={"placeholder": "test"})
+	# DateTime is deprecated
+	date = DateField('Match Date', format='%Y-%m-%d',
+					validators=[DataRequired()])
+
+	time_period = SelectField('Time Period',
+				validators=[DataRequired()],
+				choices=[(1, "Morning"), (2, "Afternoon"),
+						(3, "Evening"), (4, "Night")])
 
 	location = StringField('Location', validators=[Length(min=2, max=50)])
 
@@ -82,7 +89,7 @@ class MatchFormMixin():
 
 	# Date validation
 	def validate_date(self, date):
-		if date.data < datetime.now():
+		if date.data < date_func.today():
 			raise ValidationError("The date cannot be in the past!")
 
 # Create new match Form
@@ -97,6 +104,24 @@ class UpdateMatchForm(FlaskForm, MatchFormMixin):
 
 
 # Filter match Form
-class FilterMatchForm(FlaskForm, MatchFormMixin):
+class FilterMatchForm(FlaskForm):
+
+
+	title = StringField('Title',
+					validators=[Optional()])
+	description = TextAreaField('Description')
+
+	# DateTime is deprecated
+	date = DateField('Match Date', format='%Y-%m-%d',
+					validators=[Optional()])
+
+	time_period = SelectField('Time Period',
+				validators=[Optional()],
+				choices=[(1, "Morning"), (2, "Afternoon"),
+						(3, "Evening"), (4, "Night")])
+
+	location = StringField('Location', validators=[Optional()])
+
+	sport_id = SelectField('Sport', validators=[Optional()])
 
 	submit = SubmitField('Filter Match')

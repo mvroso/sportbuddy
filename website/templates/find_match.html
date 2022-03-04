@@ -10,7 +10,7 @@
   		<div class="col-4 text-end">
   			<!-- Button trigger modal -->
   			<p>Filter:
-	      <a role="button" class="btn btn-light" href="">
+	      <a role="button" class="btn btn-light" href="{{ url_for('filter_match') }}">
 	        <i class="bi-search"></i>
 	      </a></p>
   		</div>
@@ -30,7 +30,7 @@
 	          	{{ match.title | truncate(20) | title }}
 	          </a>
 	          </h3>
-	          <h4>{{ match.location | capitalize }} - {{ match.date.strftime('%d/%m/%Y at %H:%M') }}</h4>
+	          <h4>{{ match.location | capitalize }} - {{ match.date.strftime('%d/%m/%Y') }}</h4>
 	          <p>
 	            {{ match.description | truncate(150)}}
 	          </p>
