@@ -13,6 +13,8 @@ def load_user(user_id):
 
 # Class description
 class User(db.Model, UserMixin):
+    __tablename__ = 'user'
+
     # primary key
     id = db.Column(db.Integer, primary_key=True)
 
@@ -21,12 +23,12 @@ class User(db.Model, UserMixin):
     password = db.Column(db.String(30), nullable=False)
 
     # Choices (Male = 1, Female = 2, Not applicable = 3)
-    gender = db.Column(db.Integer, nullable=False, default=1)
+    gender_id = db.Column(db.Integer, nullable=False, default=1)
 
     # user image hash
     image_file = db.Column(db.String(20), nullable=False, default='default.jpg')
 
-    # foreign key = Role (common user = 1)
+    # foreign key = Role
     role_id = db.Column(db.Integer, db.ForeignKey('role.id'), nullable=False, default=1)
 
     # relationship = User | one to Many | Match
@@ -38,12 +40,12 @@ class User(db.Model, UserMixin):
     messages = db.relationship('User', backref='role', lazy=True)
     '''
 
-    # generate a reset token that expires in 10 minutes
+    # generate a reset password token that expires in 10 minutes
     def get_reset_token(self, expires_sec=600):
         s = Serializer(app.config['SECRET_KEY'], expires_sec)
         return s.dumps({'user_id': self.id}).decode('utf-8')
 
-    # verifies the reset token and returns the user_id or None
+    # verifies the reset password token and returns the user_id or None
     @staticmethod
     def verify_reset_token(token):
         s = Serializer(app.config['SECRET_KEY'])
@@ -56,19 +58,38 @@ class User(db.Model, UserMixin):
     def __repr__(self):
         return f"User('{self.name}', '{self.email}', '{self.image_file}', '{self.role.name}')"
 
-'''
- ***** ISSO AQUI FOI SO PRA TESTAR, APAGAR DEPOIS *****
-# Class description
-class Post(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(100), nullable=False)
-    date_posted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    content = db.Column(db.Text, nullable=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+# Helper table for Coach sports
+sports = db.Table('sports',
+    db.Column('coach_id', db.Integer, db.ForeignKey('coach.id'), primary_key=True),
+    db.Column('sport_id', db.Integer, db.ForeignKey('sport.id'), primary_key=True)
+    )
+
+# User = parent
+class Coach(User):
+    __tablename__ = 'coach'
+
+    # primary key from parent User
+    id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
+
+    # unique attributes to coach
+    sports = db.relationship('Sport', secondary=sports, lazy='subquery',
+        backref=db.backref('coach', lazy=True))
+
+    # card hash
+    card_file = db.Column(db.String(20), nullable=False, default='card.jpg')
+
+    hourly_rate = db.Column(db.Integer, nullable=False, default=15)
+
+    description = db.Column(db.Text, nullable=True)
+
+    phone_number = db.Column(db.String(20), nullable=True)
+
+    # Choices (Free = 1, Premium = 2)
+    plan_id = db.Column(db.Integer, nullable=False, default=1)
 
     def __repr__(self):
-        return f"Post('{self.title}', '{self.date_posted}')"
-'''
+        return f"Coach('{self.name}', '{self.sports}', '{self.hourly_rate}', '{self.plan_id}')"
+
 
 # Class description
 class Role(db.Model):
@@ -84,22 +105,6 @@ class Role(db.Model):
 
     def __repr__(self):
         return f"Role('{self.id}', '{self.name}')"
-
-'''
-# Class description
-# Male = 1, Female = 2, Neutral = 3, Not applicable = 4
-class Gender(db.Model):
-    # primary key
-    id = db.Column(db.Integer, primary_key=True)
-
-    name = db.Column(db.String(30), unique=True, nullable=False)
-
-    # relationship = Role | one to Many | User
-    users = db.relationship('User', backref='gender', lazy=True)
-
-    def __repr__(self):
-        return f"Gender('{self.id}', '{self.name}')"
-'''
 
 
 # Helper table for Match players
@@ -119,7 +124,7 @@ class Match(db.Model):
     title = db.Column(db.String(50), nullable=False)
     description = db.Column(db.Text, nullable=True)
     date = db.Column(db.Date, nullable=False, default=date.today)
-    players_maxnumber = db.Column(db.Integer, nullable=False, default=5)
+    players_maxnumber = db.Column(db.Integer, nullable=False, default=2)
 
     # ***** MUDAR PARA UM PONTO GEOGRAFICO DEPOIS ?????? *****
     location = db.Column(db.String(50), nullable=False, default='Torino')
@@ -139,8 +144,6 @@ class Match(db.Model):
 
     def __repr__(self):
         return f"Match('{self.title}', '{self.date}', '{self.sport.name}')"
-
-
 
 
 

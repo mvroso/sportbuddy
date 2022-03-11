@@ -1,8 +1,8 @@
 from datetime import date as date_func
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
-from wtforms import StringField, PasswordField, SubmitField, BooleanField, EmailField, DateField, TextAreaField, SelectField
-from wtforms.validators import DataRequired, Length, EqualTo, Email, ValidationError, Optional
+from wtforms import StringField, PasswordField, SubmitField, BooleanField, EmailField, DateField, TextAreaField, SelectField, SelectMultipleField, IntegerField, DecimalField
+from wtforms.validators import DataRequired, Length, EqualTo, Email, ValidationError, Optional, NumberRange
 from flask_login import current_user
 from website.models import User, Sport
 
@@ -15,6 +15,10 @@ class RegistrationForm(FlaskForm):
 				validators=[DataRequired()],
 				choices=[(1, "Male"), (2, "Female"),
 						(3, "Not applicable")])
+	role = SelectField('Role',
+				validators=[DataRequired()],
+				choices=[(1, "Common"), (2, "Coach"),
+						(3, "Company")])
 	password = PasswordField('Password',
 				validators=[DataRequired()])
 	confirm_password = PasswordField('Confirm Password',
@@ -35,7 +39,7 @@ class LoginForm(FlaskForm):
 	submit = SubmitField('Login')
 
 class RequestResetForm(FlaskForm):
-	email = StringField('email',
+	email = StringField('Email',
 				validators=[DataRequired(), Email()])
 	submit = SubmitField('Request Password Reset')
 
@@ -67,6 +71,24 @@ class UpdateAccountForm(FlaskForm):
 				raise ValidationError('This e-mail is already been used')
 
 
+class UpdateCoachAccountForm(FlaskForm):
+	hourly_rate = DecimalField('Hourly Rate',
+					validators=[DataRequired(),
+							NumberRange(min=1, max=10000)])
+	description = TextAreaField('Description')
+
+	phone_number = StringField('Phone Number')
+	
+	# check if coerce=int is not necessary
+	sports = SelectMultipleField('Sports', coerce=int)
+
+	card = FileField('Card Picture',
+					validators=[FileAllowed(['jpg', 'png'])])
+
+	submit = SubmitField('Update')
+
+
+
 # Implementing MatchForm Mixin
 class MatchFormMixin():
 
@@ -84,8 +106,11 @@ class MatchFormMixin():
 						(3, "Evening"), (4, "Night")])
 
 	location = StringField('Location', validators=[Length(min=2, max=50)])
+	
+	players_maxnumber = IntegerField('Number of Players',
+					validators=[DataRequired(),	NumberRange(min=1, max=30)])
 
-	sport_id = SelectField('Sport', validators=[DataRequired()])
+	sport_id = SelectField('Sport', coerce=int)
 
 	# Date validation
 	def validate_date(self, date):

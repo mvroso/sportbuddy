@@ -3,9 +3,10 @@ from PIL import Image
 from datetime import datetime, timedelta
 from flask import render_template, url_for, flash, redirect, request
 from website import app, db, bcrypt, mail
-from website.models import User, Role, Sport, Match, Timeperiod
+from website.models import User, Role, Sport, Match, Timeperiod, Coach
 from website.forms import (RegistrationForm, LoginForm, UpdateAccountForm, CreateMatchForm, 
-                        UpdateMatchForm, FilterMatchForm, RequestResetForm, ResetPasswordForm)
+                        UpdateMatchForm, FilterMatchForm, RequestResetForm, ResetPasswordForm,
+                        UpdateCoachAccountForm)
 from flask_login import login_user, logout_user, current_user, login_required
 from flask_mail import Message
 from sqlalchemy import or_, and_, func
@@ -31,12 +32,30 @@ def register():
         if form.validate_on_submit():
             hashed_password = bcrypt.generate_password_hash(
                                     form.password.data).decode('utf-8')
-            user = User(name=form.name.data, email=form.email.data,
-                    password=hashed_password)
+            # Common = "1"
+            if form.role.data == "1":
+                user = User(name=form.name.data,
+                        email=form.email.data,
+                        gender_id=form.gender.data,
+                        role_id=form.role.data,
+                        password=hashed_password)
+                # Add user to database
+                db.session.add(user)
 
-            # Add user to database
-            db.session.add(user)
+            # Coach = "2"
+            elif form.role.data == "2":
+                coach = Coach(name=form.name.data,
+                        email=form.email.data,
+                        gender_id=form.gender.data,
+                        role_id=form.role.data,
+                        password=hashed_password)
+                db.session.add(coach)
+
+
+            # Commit changes to database
             db.session.commit()
+
+            
 
             flash('Your account has been successfully created!', 'success')
             return redirect(url_for('login'))
@@ -108,21 +127,20 @@ def reset_password(token):
 
     form = ResetPasswordForm()
     if form.validate_on_submit():
-            hashed_password = bcrypt.generate_password_hash(
-                                    form.password.data).decode('utf-8')
+        hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
 
-            user.password = hashed_password
-            db.session.commit()
+        user.password = hashed_password
+        db.session.commit()
 
-            flash('Your password has been updated!', 'success')
-            return redirect(url_for('login'))
+        flash('Your password has been updated!', 'success')
+        return redirect(url_for('login'))
 
     return render_template('reset_password.html', title='Reset Password', form=form)
 
 
 
-# Save user uploaded picture in /static/img file
-def save_picture(form_picture):
+# Save user uploaded picture in /static/img/profile_pictures
+def save_picture(form_picture, size):
     random_hex = secrets.token_hex(8)
     _, f_ext = os.path.splitext(form_picture.filename)
     picture_fn = random_hex + f_ext
@@ -130,7 +148,7 @@ def save_picture(form_picture):
                 'static/img/profile_pictures', picture_fn)
     
     # Resize picture with Pillow
-    output_size = (125, 125)
+    output_size = (size, size)
     img = Image.open(form_picture)
     img.thumbnail(output_size)
     img.save(picture_path)
@@ -144,7 +162,7 @@ def account():
     form = UpdateAccountForm()
     if form.validate_on_submit():
         if form.picture.data:
-            picture_file = save_picture(form.picture.data)
+            picture_file = save_picture(form.picture.data, 125)
             current_user.image_file = picture_file
 
         current_user.name = form.name.data
@@ -162,6 +180,44 @@ def account():
     return render_template('account.html', title='Account',
                         image_file=image_file, form=form)
 
+@app.route("/coach/account", methods=['GET', 'POST'])
+@login_required
+def coach_account():
+    if current_user.role.name != "Coach":
+        flash('Your cannot access this page!', 'danger')
+        return redirect(url_for('index'))
+
+    coach = Coach.query.filter_by(id=current_user.id).first()
+    form = UpdateCoachAccountForm()
+    form.sports.choices = [(row.id, row.name) for row 
+                                    in Sport.query.order_by('name')]
+
+    if form.validate_on_submit():
+        if form.card.data:
+            card_file = save_picture(form.card.data, 250)
+            coach.card = card_file
+
+        coach.hourly_rate = form.hourly_rate.data
+        coach.phone_number = form.phone_number.data
+        coach.description = form.description.data
+        for sport_id in form.sports.data:
+            sport = Sport.query.get(sport_id)
+            coach.sports.append(sport)
+        db.session.commit()
+        flash('Your coach account has been updated!', 'success')
+        return redirect(url_for('coach_account'))
+    elif request.method == 'GET':
+        form.hourly_rate.data = coach.hourly_rate
+        form.phone_number.data = coach.phone_number
+        form.description.data = coach.description
+        # sports
+
+    # Get current user profile picture
+    image_file = url_for('static', filename='img/profile_pictures/' +
+                        current_user.image_file)
+    return render_template('coach_account.html', title='Coach Account',
+                        image_file=image_file, form=form)
+
 # Create a new match
 @app.route("/match/create", methods=['GET', 'POST'])
 @login_required
@@ -177,7 +233,9 @@ def create_match():
         if form.validate_on_submit():
             match = Match(title=form.title.data,
                 description=form.description.data,
-                date=form.date.data, location=form.location.data,
+                date=form.date.data,
+                players_maxnumber=form.players_maxnumber.data,
+                location=form.location.data,
                 sport_id=form.sport_id.data,
                 time_period_id=form.time_period.data,
                 owner=current_user)
@@ -200,11 +258,13 @@ def find_match(sport_id=0, time_period_id=0, date=None, title=None, location=Non
     page = request.args.get('page', 1, type=int)
 
     # Builds the search query
+    '''
     # FIND MATCH IS STILL NOT WORKING PROPERLY GRR!!!!!!!!!!!!!!!!!!!!!!!!!!
     #subquery = 
     #query = and_(Match.date >= datetime.now(),
-    #    func.count(Match.players) < Match.players_maxnumber)
-    query = or_(Match.date >= datetime.now(), 0)
+    #func.count(Match.players) < Match.players_maxnumber)
+    '''
+    query = or_(Match.date >= datetime.now())
 
     if sport_id != 0:
         query = and_(query, Match.sport_id == sport_id)
@@ -271,12 +331,12 @@ def details_match(match_id):
     match = Match.query.get_or_404(match_id)
 
     # Join Button
-    join_flag = True
+    able_to_join = True
     player_number = len(match.players) + 1 # +1 is the owner
     if current_user in match.players or player_number >= match.players_maxnumber:
-        join_flag = False
+        able_to_join = False
 
-    return render_template('details_match.html', title='Match Details', match=match, flag=join_flag, player_number=player_number)
+    return render_template('details_match.html', title='Match Details', match=match, able_to_join=able_to_join, player_number=player_number)
 
 # Join a match as a player
 @app.route("/match/<int:match_id>/join", methods=['POST'])
@@ -379,15 +439,18 @@ def update_match(match_id):
 
     # Update match in database (method = POST)
     if form.validate_on_submit():
-        match.title = form.title.data
-        match.description = form.description.data
-        match.date = form.date.data
-        match.location = form.location.data
-        match.sport_id = form.sport_id.data
-        match.time_period_id = form.time_period.data
-        db.session.commit()
-
-        flash('Your match has been updated!', 'success')
+        if form.players_maxnumber.data < len(match.players) + 1:
+            flash('There are players in this match!', 'danger')
+        else:
+            match.title = form.title.data
+            match.description = form.description.data
+            match.date = form.date.data
+            match.players_maxnumber = form.players_maxnumber.data
+            match.location = form.location.data
+            match.sport_id = form.sport_id.data
+            match.time_period_id = form.time_period.data
+            db.session.commit()
+            flash('Your match has been updated!', 'success')
         return redirect(url_for('details_match', match_id=match.id))
 
     # Populate form (method = GET)
@@ -395,10 +458,10 @@ def update_match(match_id):
         form.title.data = match.title
         form.description.data = match.description
         form.date.data = match.date
+        form.players_maxnumber.data = match.players_maxnumber
         form.location.data = match.location
 
     return render_template('create_update_match.html', title='Update Match', form=form, legend='Update', match=match)
-
 
 # Delete a single match that you own
 @app.route("/match/<int:match_id>/delete", methods=['POST'])
@@ -419,6 +482,17 @@ def delete_match(match_id):
 
 
 
+# Show a list of existing coaches
+@app.route("/coach/find")
+@login_required
+def find_coach():
+    page = request.args.get('page', 1, type=int)
+
+    coaches = Match.query.filter(query) \
+            .order_by(Match.date.asc()) \
+            .paginate(page=page, per_page=2)
+
+    return render_template('find_coach.html', title='Find Coach', coaches=coaches)
 
 
 
@@ -450,14 +524,6 @@ def delete_match(match_id):
 
 
 
-
-
-
-@app.route("/teste")
-def teste():
-    print (os.getenv('MAIL_PASS'))
-    print (os.environ.get("SECRET_KEY"))
-    return redirect(url_for('index'))
 
 
 

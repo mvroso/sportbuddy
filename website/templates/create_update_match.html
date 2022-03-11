@@ -18,19 +18,25 @@
 							{{ form.hidden_tag() }}
 
 							<div class="row mt-3">
-								<div class="col-sm-8">
+								<div class="col">
 									{{ form.title.label(class="form-label") }}
 					        {{ form.title(class="form-control") }}
 								</div>
-								<div class="col-sm-4">
+							</div>
+							<div class="row mt-3">
+								<div class="col-sm-8">
 									{{ form.location.label(class="form-label") }}
 					        {{ form.location(class="form-control") }}
+								</div>
+								<div class="col-sm-4">
+									{{ form.date.label(class="form-label") }}
+					        {{ form.date(class="form-control") }}
 								</div>
 							</div>
 							<div class="row mt-3">
 								<div class="col-sm-4">
-									{{ form.date.label(class="form-label") }}
-					        {{ form.date(class="form-control") }}
+									{{ form.players_maxnumber.label(class="form-label") }}
+					        {{ form.players_maxnumber(class="form-control") }}
 								</div>
 								<div class="col-sm-4">
 									{{ form.time_period.label(class="form-label") }}

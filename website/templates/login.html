@@ -1,57 +1,60 @@
 {% extends "base.html" %}
 {% block content %}
-  <main id="main">
-  	<div class="content-section">
-  		<form method="POST" action="">
-  			{{ form.hidden_tag() }}
-  			<fieldset class="form-group">
-  				<legend>
-  					Log In
-  				</legend>
-  				<div class="form-group">
-		            {{ form.email.label(class="form-control-label") }}
 
-		            {% if form.email.errors %}
-		              {{ form.email(class="form-control form-control-lg is-invalid") }}
-		              <div class="invalid-feedback">
-		                {% for error in form.email.errors %}
-		                <span> {{ error }} </span>
-		                {% endfor %}
-		              </div>
-		            {% else %}
-		              {{ form.email(class="form-control form-control-lg") }}
-		            {% endif %}
-	          	</div>
-		        <div class="form-group">
-		            {{ form.password.label(class="form-control-label") }}
+<!-- ======= Blog Single Section ======= -->
+<section id="blog" class="blog">
+  <div class="container" data-aos="fade-up">
 
-		            {% if form.password.errors %}
-		              {{ form.password(class="form-control form-control-lg is-invalid") }}
-		              <div class="invalid-feedback">
-		                {% for error in form.password.errors %}
-		                <span> {{ error }} </span>
-		                {% endfor %}
-		              </div>
-		            {% else %}
-		              {{ form.password(class="form-control form-control-lg") }}
-		            {% endif %}
-		         </div>
-  			</fieldset>
-  			<div class="form-group">
-	          {{ form.submit(class="btn btn-outline-info") }}
-	        </div>
-	        <div class="border-top pt-2">
-		      <small class="text-muted">
-		        <a class="ml-2" href="{{ url_for('reset_password_request') }}"> Forgot Password? </a>
-		      </small>
-		    </div>
-  		</form>
-  	</div>
-  	<div class="border-top pt-3">
-      <small class="text-muted">
-        Need an account? <a class="ml-2" href="{{ url_for('register') }}"> Register </a>
-      </small>
-    </div>
+    <div class="row justify-content-center">
 
-  </main><!-- End #main -->
+      <div class="col-lg-8 entries">
+
+        <div class="blog-comments">
+
+          <div class="reply-form">
+            <h4>{{ title }}</h4>
+
+            <form method="POST" action="">
+              {{ form.hidden_tag() }}
+              <div class="row mt-3">
+                <div class="col-sm-12">
+                  {{ form.email.label(class="form-label") }}
+                  {{ form.email(class="form-control") }}
+                </div>
+              </div>
+              <div class="row mt-3">
+                <div class="col-sm-12">
+                  {{ form.password.label(class="form-label") }}
+                  {{ form.password(class="form-control") }}
+                </div>
+              </div>
+              <div class="row mt-3">
+                <div class="col-sm-12 text-center">
+                  <small class="text-muted">
+						        Need an account? <a class="ml-2" href="{{ url_for('register') }}"> Register </a>
+						      </small>
+                </div>
+              </div>
+              <div class="row mt-3">
+                <div class="col text-center">
+                  {{ form.submit(class="btn btn-primary") }}
+                </div>
+              </div>
+            </form>
+
+        	</div><!-- End blog comments -->
+
+				</div><!-- End blog entries list -->
+				
+			<div class="row text-center">
+				<small class="text-muted">
+					<a class="ml-2" href="{{ url_for('reset_password_request') }}"> Forgot Password? </a>
+				</small>
+			</div>
+
+    	</div>
+
+		</div>
+</section><!-- End Blog Single Section -->
+
 {% endblock content %}
