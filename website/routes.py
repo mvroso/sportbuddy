@@ -188,6 +188,7 @@ def coach_account():
         return redirect(url_for('index'))
 
     coach = Coach.query.filter_by(id=current_user.id).first()
+    
     form = UpdateCoachAccountForm()
     form.sports.choices = [(row.id, row.name) for row 
                                     in Sport.query.order_by('name')]
@@ -195,22 +196,35 @@ def coach_account():
     if form.validate_on_submit():
         if form.card.data:
             card_file = save_picture(form.card.data, 250)
-            coach.card = card_file
+            coach.card_file = card_file
 
         coach.hourly_rate = form.hourly_rate.data
         coach.phone_number = form.phone_number.data
         coach.description = form.description.data
-        for sport_id in form.sports.data:
-            sport = Sport.query.get(sport_id)
+
+        coach.sports = []
+        if form.sports.data != [] and type(form.sports.data) is list:
+            for sport_id in form.sports.data:
+                sport = Sport.query.get(sport_id)
+                coach.sports.append(sport)
+        elif type(form.sports.data) is int:
+            sport = Sport.query.get(form.sports.data)
             coach.sports.append(sport)
+
         db.session.commit()
+
         flash('Your coach account has been updated!', 'success')
         return redirect(url_for('coach_account'))
+
     elif request.method == 'GET':
         form.hourly_rate.data = coach.hourly_rate
         form.phone_number.data = coach.phone_number
         form.description.data = coach.description
         # sports
+        sport_id_list = []
+        for sport in coach.sports:
+            sport_id_list.append(sport.id)
+        form.sports.data = sport_id_list
 
     # Get current user profile picture
     image_file = url_for('static', filename='img/profile_pictures/' +
@@ -480,22 +494,67 @@ def delete_match(match_id):
     flash('Your match has been deleted!', 'success')
     return redirect(url_for('find_match'))
 
-
-
 # Show a list of existing coaches
 @app.route("/coach/find")
 @login_required
 def find_coach():
     page = request.args.get('page', 1, type=int)
 
-    coaches = Match.query.filter(query) \
-            .order_by(Match.date.asc()) \
-            .paginate(page=page, per_page=2)
+    coaches = Coach.query.filter(Coach.plan_id == 1) \
+            .order_by(Coach.name.asc()) \
+            .paginate(page=page, per_page=4)
 
-    return render_template('find_coach.html', title='Find Coach', coaches=coaches)
+    premium_coaches = Coach.query.filter(Coach.plan_id == 2) \
+            .order_by(Coach.name.asc())
+
+    return render_template('find_coach.html', title='Find Coach', coaches=coaches, premium_coaches=premium_coaches)
+
+# NOT IMPLEMENTED YET
+# Filter a list of existing coaches
+@app.route("/coach/filter", methods=['GET', 'POST'])
+@login_required
+def filter_coach():
+    pass
+
+# NOT IMPLEMENTED YET
+# Show details of a single coach
+@app.route("/coach/<int:coach_id>/details")
+@login_required
+def details_coach(coach_id):
+    match = Match.query.get_or_404(match_id)
+
+    # Join Button
+    able_to_join = True
+    player_number = len(match.players) + 1 # +1 is the owner
+    if current_user in match.players or player_number >= match.players_maxnumber:
+        able_to_join = False
+
+    return render_template('details_match.html', title='Match Details', match=match, able_to_join=able_to_join, player_number=player_number)
 
 
+# Shows the plans available for the coaches
+@app.route("/coach/plans", methods=['GET', 'POST'])
+@login_required
+def plans():
+    if current_user.role.name != "Coach":
+        flash('Your cannot access this page!', 'danger')
+        return redirect(url_for('index'))
 
+    if request.method == "POST":
+        coach = Coach.query.filter_by(id=current_user.id).first()
+
+        plan = ""
+        if request.form.get("selectfree") != None:
+            coach.plan_id = 1
+            plan = "Free"
+        elif request.form.get("selectpremium") != None:
+            coach.plan_id = 2
+            plan = "Premium"
+
+        db.session.commit()
+        flash("You have switched to the " + plan + " plan!", "success")
+
+    return render_template('plans.html', title='Plans')
 
 
 
@@ -533,19 +592,8 @@ def find_coach():
 # Shortcut to insert data in the database
 @app.route("/insertdata")
 def insertdata():
-    '''
-    gender_1 = Gender(name='Male')
-    gender_2 = Gender(name='Female')
-    gender_3 = Gender(name='Neutral')
-    gender_4 = Gender(name='Not applicable')
-    db.session.add(gender_1)
-    db.session.add(gender_2)
-    db.session.add(gender_3)
-    db.session.add(gender_4)
-    db.session.commit()
-    '''
     
-    # Create three timeperiods
+    # Create four timeperiods
     timeperiod_1 = Timeperiod(name='Morning')
     timeperiod_2 = Timeperiod(name='Afternoon')
     timeperiod_3 = Timeperiod(name='Evening')
@@ -566,7 +614,7 @@ def insertdata():
     db.session.commit()
     
     
-    # Create three standard sports
+    # Create six standard sports
     sport_1 = Sport(name='Basketball')
     sport_2 = Sport(name='Tennis')
     sport_3 = Sport(name='Fencing')
@@ -580,7 +628,63 @@ def insertdata():
     db.session.add(sport_4)
     db.session.add(sport_5)
     db.session.add(sport_6)
+    db.session.commit()
 
+    hashed_password = bcrypt.generate_password_hash(
+                                    "123").decode('utf-8')
+    # Create several standard coaches
+    coach_1 = Coach(name='Gabriel1',
+                        email='gabriel1@teste.com',
+                        gender_id=1,
+                        role_id=2,
+                        password=hashed_password,
+                        plan_id=2)
+    coach_2 = Coach(name='Gabriel2',
+                        email='gabriel2@teste.com',
+                        gender_id=1,
+                        role_id=2,
+                        password=hashed_password,
+                        plan_id=2)
+    coach_3 = Coach(name='Gabriel3',
+                        email='gabriel3@teste.com',
+                        gender_id=1,
+                        role_id=2,
+                        password=hashed_password,
+                        plan_id=2)
+    coach_4 = Coach(name='Gabriel4',
+                        email='gabriel4@teste.com',
+                        gender_id=1,
+                        role_id=2,
+                        password=hashed_password)
+    coach_5 = Coach(name='Gabriel5',
+                        email='gabriel5@teste.com',
+                        gender_id=1,
+                        role_id=2,
+                        password=hashed_password)
+    coach_6 = Coach(name='Gabriel6',
+                        email='gabriel6@teste.com',
+                        gender_id=1,
+                        role_id=2,
+                        password=hashed_password)
+    coach_7 = Coach(name='Gabriel7',
+                        email='gabriel7@teste.com',
+                        gender_id=1,
+                        role_id=2,
+                        password=hashed_password)
+    coach_8 = Coach(name='Gabriel8',
+                        email='gabriel8@teste.com',
+                        gender_id=1,
+                        role_id=2,
+                        password=hashed_password)
+    
+    db.session.add(coach_1)
+    db.session.add(coach_2)
+    db.session.add(coach_3)
+    db.session.add(coach_4)
+    db.session.add(coach_5)
+    db.session.add(coach_6)
+    db.session.add(coach_7)
+    db.session.add(coach_8)
     db.session.commit()
     
     '''

@@ -15,43 +15,73 @@
 	      </a></p>
   		</div>
   	</div>
+
+  	<!-- ======= Our Team Section ======= -->
+    <section id="team" class="team section-bg">
+      <div class="container">
+
+        <div class="section-title" data-aos="fade-up">
+          <h2>Our <strong>Stars</strong></h2>
+          <p>These are some of the best coaches in our platform.</p>
+        </div>
+
+        <div class="row justify-content-center">
+        	{% set count = namespace(value=0) %}
+        	{% for coach in premium_coaches %}
+	        	{% if coach.plan_id == 2 and count.value <= 4 %}
+		          <div class="col-lg-3 col-md-6 align-self-center d-flex align-items-stretch">
+		            <div class="member" data-aos="fade-up" {% if count.value != 0 %} data-aos-delay="{{ count.value }}00" {% endif %}>
+		              <div class="member-img">
+		                <img src="{{ url_for('static', filename='img/profile_pictures/' + coach.card_file) }}" class="img-fluid" alt="">
+		              </div>
+		              <div class="member-info">
+		                <h4><a href="{{ url_for('details_coach', coach_id=coach.id) }}">{{ coach.name }}</a></h4>
+		                <span>{{ coach.phone_number }}</span>
+		              </div>
+		            </div>
+		          </div>
+		          {% set count.value = count.value + 1 %}
+		        {% endif %}
+		      {% endfor %}
+        </div>
+
+      </div>
+    </section><!-- End Our Team Section -->
+
     <div class="row">
-    	{% for match in matches.items %}
-      <div class="col-lg-12 {% if not loop.first %} mt-4 {% endif %}" data-aos="fade-up" {% if not loop.first %} data-aos-delay="{{ loop.index0 }}00" {% endif %}>
+    {% for coach in coaches.items %}
+  		<div class="col-lg-12 {% if count.value != 0 %} mt-4 {% endif %}" data-aos="fade-up" {% if count.value != 0 %} data-aos-delay="{{ count.value + loop.index0 }}00" {% endif %}>
         <div class="testimonial-item">
         	<div class="row justify-content-start">
         		<div class="col col-lg-1 col-md-2 col-4">
-	          <img src="{{ url_for('static', filename='img/sports-icons/' +
-	                        match.sport.name) + '.png' }}" class="testimonial-img" alt="">
+	          <img src="{{ url_for('static', filename='img/profile_pictures/' +
+	                        coach.image_file) }}" class="testimonial-img" alt="">
 	          </div>
 	          <div class="col col-lg-11 col-md-10 col-8">
 	          <h3>
-	          <a href="{{ url_for('details_match', match_id=match.id) }}">
-	          	{{ match.title | truncate(20) | title }}
+	          <a href="{{ url_for('details_coach', coach_id=coach.id) }}">
+	          	{{ coach.name | truncate(20) | title }}
 	          </a>
 	          </h3>
-	          <h4>{{ match.location | capitalize }} - {{ match.date.strftime('%d/%m/%Y') }}</h4>
-	          <p>
-	            {{ match.description | truncate(150)}}
-	          </p>
+	          <h4>{{ coach.hourly_rate | round(2) }}€ per hour - {{ coach.phone_number }}</h4>
 	        	</div>
           </div>
         </div>
       </div>
-      {% endfor %}
+	  {% endfor %}
     </div>
 
     <div class="row mt-2">
-  			<p>Didn't find anyone to play with? You can <a href="{{ url_for('create_match') }}">Create your own Match</a>!</p>
+  			<p>Didn't find anyone to coach with? You can <a href="{{ url_for('create_match') }}">Become a coach yourself</a>!</p>
   	</div>
 
     <div class="text-center" >
-    	{% for page_num in matches.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+    	{% for page_num in coaches.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
 	  		{% if page_num %}
-	  			{% if matches.page == page_num %}
-	  				<a class="btn btn-dark active mt-4" href="{{url_for('find_match', page=page_num) }}">{{ page_num }}</a>
+	  			{% if coaches.page == page_num %}
+	  				<a class="btn btn-dark active mt-4" href="{{url_for('find_coach', page=page_num) }}">{{ page_num }}</a>
 	  			{% else %}
-	  				<a class="btn btn-outline-dark mt-4" href="{{url_for('find_match', page=page_num) }}">{{ page_num }}</a>
+	  				<a class="btn btn-outline-dark mt-4" href="{{url_for('find_coach', page=page_num) }}">{{ page_num }}</a>
 	  			{% endif %}
 
 	  		{% else %}

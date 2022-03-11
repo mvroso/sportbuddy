@@ -88,7 +88,6 @@ class UpdateCoachAccountForm(FlaskForm):
 	submit = SubmitField('Update')
 
 
-
 # Implementing MatchForm Mixin
 class MatchFormMixin():
 

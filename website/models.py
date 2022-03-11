@@ -78,7 +78,7 @@ class Coach(User):
     # card hash
     card_file = db.Column(db.String(20), nullable=False, default='card.jpg')
 
-    hourly_rate = db.Column(db.Integer, nullable=False, default=15)
+    hourly_rate = db.Column(db.Numeric, nullable=False, default=15)
 
     description = db.Column(db.Text, nullable=True)
 
