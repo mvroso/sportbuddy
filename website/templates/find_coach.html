@@ -16,27 +16,28 @@
   		</div>
   	</div>
 
+    {% set count = namespace(value=0) %}
+  	{% if premium_coaches.count() != 0 %}
   	<!-- ======= Our Team Section ======= -->
     <section id="team" class="team section-bg">
       <div class="container">
 
-        <div class="section-title" data-aos="fade-up">
-          <h2>Our <strong>Stars</strong></h2>
-          <p>These are some of the best coaches in our platform.</p>
+        <div class="row mb-2 text-center">
+          <h3>Our <strong>Stars</strong></h3>
+          <p>These are some of the best coaches in our platform:</p>
         </div>
 
-        <div class="row justify-content-center">
-        	{% set count = namespace(value=0) %}
+        <div class="row justify-content-center section-bg">
         	{% for coach in premium_coaches %}
 	        	{% if coach.plan_id == 2 and count.value <= 4 %}
-		          <div class="col-lg-3 col-md-6 align-self-center d-flex align-items-stretch">
+		          <div class="col-lg-3 col-md-6 align-self-center d-flex align-items-stretch justify-content-center">
 		            <div class="member" data-aos="fade-up" {% if count.value != 0 %} data-aos-delay="{{ count.value }}00" {% endif %}>
 		              <div class="member-img">
 		                <img src="{{ url_for('static', filename='img/profile_pictures/' + coach.card_file) }}" class="img-fluid" alt="">
 		              </div>
-		              <div class="member-info">
+		              <div class="member-info text-center">
 		                <h4><a href="{{ url_for('details_coach', coach_id=coach.id) }}">{{ coach.name }}</a></h4>
-		                <span>{{ coach.phone_number }}</span>
+		                <span><i class="bi bi-whatsapp"></i> <a href="https://wa.me/39{{ coach.phone_number }}?text=I'm%20interested%20in%20your%20coaching%20services">+39 {{ coach.phone_number }}</a></span>
 		              </div>
 		            </div>
 		          </div>
@@ -44,9 +45,10 @@
 		        {% endif %}
 		      {% endfor %}
         </div>
-
-      </div>
-    </section><!-- End Our Team Section -->
+			</div>
+		</section>
+    <!-- End Our Team Section -->
+    {% endif %}
 
     <div class="row">
     {% for coach in coaches.items %}
@@ -72,7 +74,7 @@
     </div>
 
     <div class="row mt-2">
-  			<p>Didn't find anyone to coach with? You can <a href="{{ url_for('create_match') }}">Become a coach yourself</a>!</p>
+  			<p>Didn't find anyone to coach with? You can <a href="{{ url_for('find_match') }}">Find a Match</a> instead!</p>
   	</div>
 
     <div class="text-center" >

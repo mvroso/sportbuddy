@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<!-- ======= Blog Single Section ======= -->
+<section id="blog" class="blog">
+  <div class="container" data-aos="fade-up">
+
+    <div class="row">
+
+      <article class="entry entry-single">
+
+        <div class="entry-img text-center m-1 mb-3">
+          {% if coach.role_id == 2 %}
+          <img src="{{ url_for('static', filename='img/profile_pictures/' + coach.card_file) }}" class="img-fluid" alt="">
+          {% else %}
+          <img src="{{ url_for('static', filename='img/profile_pictures/' + coach.image_file) }}" class="img-fluid" alt="">
+          {% endif %}
+        </div>
+        <h2 class="entry-title text-center">
+          {{ coach.name }}
+        </h2>
+
+        <div class="entry-meta d-flex justify-content-center">
+          <ul>
+            <li class="d-flex align-items-center">
+              <i class="bi bi-envelope"></i>
+              <a href="mailto:{{ coach.email }}">{{ coach.email }}</a>
+            </li>
+            <li class="d-flex align-items-center">
+              <i class="bi bi-person"></i>
+              {{ gender }}
+            </li>
+            <li class="d-flex align-items-center">
+              <i class="bi bi-currency-euro"></i>
+              {{ coach.hourly_rate | round(2) }}
+            </li>
+            <li class="d-flex align-items-center">
+              <i class="bi bi-whatsapp"></i> <a href="https://wa.me/39{{ coach.phone_number }}?text=I'm%20interested%20in%20your%20coaching%20services">+39 {{ coach.phone_number }}</a>
+            </li>
+          </ul>
+        </div>
+        <div class="entry-content">
+          <div class="row text-center">
+            <p>
+              {{ coach.description }}
+            </p>
+          </div>
+          {% if coach.sports != [] %}
+          <div class="row">
+            <div class="col-md-12">
+              
+            <table class="table table-hover table-sm caption-top">
+              <caption>List of sports coached</caption>
+              <thead>
+                <tr>
+                  <th scope="col">#</th>
+                  <th scope="col">Sport</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for sport in coach.sports %}
+                <tr>
+                  <th scope="row">{{ loop.index }}</th>
+                  <td colspan="2">{{ sport.name }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+            </div>
+          </div>
+          {% endif %}          
+        </div>
+        <div class="entry-footer">
+          <i class="bi bi-arrow-return-right"></i>
+          <ul class="cats">
+            <li><a href="{{ url_for('find_coach') }}">Find another Coach</a></li>
+          </ul>
+          {% if current_user.id == coach.id  %}
+            <i class="bi bi-arrow-repeat"></i>
+            <ul class="cats">
+              <li><a href="{{ url_for('coach_account') }}">Update Account</a></li>
+            </ul>
+          {% endif %}
+        </div>
+
+      </article><!-- End blog entry -->
+    </div>
+  </div>
+</section>
+
+
+{% endblock content %}

@@ -6,7 +6,7 @@ from website import app, db, bcrypt, mail
 from website.models import User, Role, Sport, Match, Timeperiod, Coach
 from website.forms import (RegistrationForm, LoginForm, UpdateAccountForm, CreateMatchForm, 
                         UpdateMatchForm, FilterMatchForm, RequestResetForm, ResetPasswordForm,
-                        UpdateCoachAccountForm)
+                        UpdateCoachAccountForm, FilterCoachForm)
 from flask_login import login_user, logout_user, current_user, login_required
 from flask_mail import Message
 from sqlalchemy import or_, and_, func
@@ -226,11 +226,16 @@ def coach_account():
             sport_id_list.append(sport.id)
         form.sports.data = sport_id_list
 
+        if coach.plan_id == 2:
+            plan = "Premium"
+        else:
+            plan = "Free"
+
     # Get current user profile picture
     image_file = url_for('static', filename='img/profile_pictures/' +
                         current_user.image_file)
     return render_template('coach_account.html', title='Coach Account',
-                        image_file=image_file, form=form)
+                        image_file=image_file, form=form, plan=plan)
 
 # Create a new match
 @app.route("/match/create", methods=['GET', 'POST'])
@@ -265,19 +270,13 @@ def create_match():
 
 
 # Show a list of existing matches
-@app.route("/match/find") #sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss
-@app.route("/match/find/<int:sport_id>/<int:time_period_id>/<date>/<title>/<location>/<description>")
+@app.route("/match/find")
+@app.route("/match/find/<int:sport_id>/<int:time_period_id>/<date>/<title>/<location>/<description>/<int:players_maxnumber>")
 @login_required
-def find_match(sport_id=0, time_period_id=0, date=None, title=None, location=None, description=None):
+def find_match(sport_id=0, time_period_id=0, date="-", title="-", location="-", description="-", players_maxnumber=0):
     page = request.args.get('page', 1, type=int)
 
     # Builds the search query
-    '''
-    # FIND MATCH IS STILL NOT WORKING PROPERLY GRR!!!!!!!!!!!!!!!!!!!!!!!!!!
-    #subquery = 
-    #query = and_(Match.date >= datetime.now(),
-    #func.count(Match.players) < Match.players_maxnumber)
-    '''
     query = or_(Match.date >= datetime.now())
 
     if sport_id != 0:
@@ -286,32 +285,25 @@ def find_match(sport_id=0, time_period_id=0, date=None, title=None, location=Non
     if time_period_id != 0:
         query = and_(query, Match.time_period_id == time_period_id)
 
-    if date != None:
+    if date != "-":
         query = and_(query, Match.date == date)
 
-    if title != None:
+    if title != "-":
         query = and_(query, Match.title.like("%" + title + "%"))
-        '''
-    if location != None or location == "":
-        query = and_(query, Match.location.like('%' + str(location) + '%'))
+        
+    if location != "-":
+        query = and_(query, Match.location.like('%' + location + '%'))
 
-    if description != None or description != "":
-        query = and_(query, Match.description.like('%' + str(description) + '%'))
-    '''
-    '''
-    if sport_id == None:
-        matches = Match.query.filter(Match.date >= datetime.now()) \
-            .order_by(Match.date.asc()).paginate(page=page, per_page=2)
-    else:
-        matches = Match.query.filter(Match.date >= datetime.now(), \
-            Match.sport_id == sport_id) \
-            .order_by(Match.date.asc()).paginate(page=page, per_page=2)
-    '''
+    if description != "-":
+        query = and_(query, Match.description.like('%' + description + '%'))
+
+    if players_maxnumber != 0:
+        query = and_(query, Match.players_maxnumber >= players_maxnumber)
+    
+    
     matches = Match.query.filter(query) \
             .order_by(Match.date.asc()) \
-            .paginate(page=page, per_page=2)
-
-    print("teste " + str(title))
+            .paginate(page=page, per_page=8)
 
     return render_template('find_match.html', title='Find Match', matches=matches)
 
@@ -332,8 +324,30 @@ def filter_match():
 
     if request.method == 'POST':
         if form.validate_on_submit():
-            return redirect(url_for('find_match', sport_id=form.sport_id.data, time_period_id=form.time_period.data,
-                    date=form.date.data, title=form.title.data))#, location=form.location.data, description=form.description.data))
+
+            sport_id = form.sport_id.data
+            time_period_id = form.time_period.data
+            date = form.date.data
+            title = form.title.data
+            location = form.location.data
+            description = form.description.data
+            players_maxnumber = form.players_maxnumber.data
+
+            if date == None:
+                date = "-"
+            if not title:
+                title = "-"
+            if not location:
+                location = "-"
+            if not description:
+                description = "-"
+            if players_maxnumber == None:
+                players_maxnumber = 0
+
+
+            return redirect(url_for('find_match', sport_id=sport_id, time_period_id=time_period_id,
+                    date=date, title=title, location=location, description=description,
+                    players_maxnumber=players_maxnumber))
 
     return render_template('create_update_match.html', title='Filter Match', form=form)
 
@@ -496,40 +510,79 @@ def delete_match(match_id):
 
 # Show a list of existing coaches
 @app.route("/coach/find")
+@app.route("/coach/find/<int:gender_id>/<int:sport_id>/<hourly_rate>/<name>")
 @login_required
-def find_coach():
+def find_coach(gender_id=0, sport_id=0, hourly_rate=0, name="-"):
     page = request.args.get('page', 1, type=int)
 
-    coaches = Coach.query.filter(Coach.plan_id == 1) \
+    # Builds the search query
+    query = or_(Coach.hourly_rate >= 0)
+
+    if sport_id != 0:
+        query = and_(query, Coach.sports.any(id=sport_id))
+
+    if gender_id != 0:
+        query = and_(query, Coach.gender_id == gender_id)
+
+    if float(hourly_rate) != 0:
+        query = and_(query, Coach.hourly_rate <= hourly_rate)
+
+    if name != "-":
+        query = and_(query, Coach.name.like("%" + name + "%"))
+
+    coaches = Coach.query.filter(query, Coach.plan_id == 1) \
             .order_by(Coach.name.asc()) \
             .paginate(page=page, per_page=4)
 
-    premium_coaches = Coach.query.filter(Coach.plan_id == 2) \
+    premium_coaches = Coach.query.filter(query, Coach.plan_id == 2) \
             .order_by(Coach.name.asc())
 
     return render_template('find_coach.html', title='Find Coach', coaches=coaches, premium_coaches=premium_coaches)
 
-# NOT IMPLEMENTED YET
+
 # Filter a list of existing coaches
 @app.route("/coach/filter", methods=['GET', 'POST'])
 @login_required
 def filter_coach():
-    pass
+    
+    form = FilterCoachForm()
 
-# NOT IMPLEMENTED YET
+    sport_list = [(row.id, row.name) for row 
+                                in Sport.query.order_by('name')]
+    sport_list.insert(0, (0, "All Sports"))
+    form.sport_id.choices = sport_list
+
+    if request.method == 'POST':
+        if form.validate_on_submit():
+
+            name = form.name.data
+            sport_id = form.sport_id.data
+            gender = form.gender.data
+            hourly_rate = form.hourly_rate.data
+
+            if not name:
+                name = "-"
+            if hourly_rate == None:
+                hourly_rate = 0
+
+            return redirect(url_for('find_coach', sport_id=sport_id, name=name,
+                    gender_id=gender, hourly_rate=hourly_rate))
+
+    return render_template('filter_coach.html', title='Filter Coach', form=form)
+
+
 # Show details of a single coach
 @app.route("/coach/<int:coach_id>/details")
 @login_required
 def details_coach(coach_id):
-    match = Match.query.get_or_404(match_id)
+    coach = Coach.query.get_or_404(coach_id)
 
-    # Join Button
-    able_to_join = True
-    player_number = len(match.players) + 1 # +1 is the owner
-    if current_user in match.players or player_number >= match.players_maxnumber:
-        able_to_join = False
+    if coach.gender_id == 1:
+        gender = "Male"
+    else:
+        gender = "Female"
 
-    return render_template('details_match.html', title='Match Details', match=match, able_to_join=able_to_join, player_number=player_number)
+    return render_template('details_coach.html', title='Coach Details', coach=coach, gender=gender)
 
 
 # Shows the plans available for the coaches
@@ -633,6 +686,14 @@ def insertdata():
     hashed_password = bcrypt.generate_password_hash(
                                     "123").decode('utf-8')
     # Create several standard coaches
+    coach_1 = Coach(name='Gabriel Sanches',
+                        email='gabrielsanches@teste.com',
+                        gender_id=1, # male
+                        role_id=2, # coach
+                        password=hashed_password,
+                        plan_id=1,
+                        hourly_rate=20.52, # random decimal with .00 (2) precision between 10 and 150
+                        phone_number='3314432435') # it MUST be in this format
     coach_1 = Coach(name='Gabriel1',
                         email='gabriel1@teste.com',
                         gender_id=1,

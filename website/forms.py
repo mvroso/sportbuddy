@@ -79,7 +79,6 @@ class UpdateCoachAccountForm(FlaskForm):
 
 	phone_number = StringField('Phone Number')
 	
-	# check if coerce=int is not necessary
 	sports = SelectMultipleField('Sports', coerce=int)
 
 	card = FileField('Card Picture',
@@ -87,6 +86,20 @@ class UpdateCoachAccountForm(FlaskForm):
 
 	submit = SubmitField('Update')
 
+class FilterCoachForm(FlaskForm):
+	name = StringField('Name',
+				validators=[Optional()])
+	hourly_rate = DecimalField('Maximum Hourly Rate',
+					validators=[Optional()])
+
+	gender = SelectField('Gender',
+				validators=[Optional()],
+				choices=[(0, "All Genders"), (1, "Male"),
+						(2, "Female")])
+
+	sport_id = SelectField('Sport', coerce=int)
+
+	submit = SubmitField('Filter Coach')
 
 # Implementing MatchForm Mixin
 class MatchFormMixin():
@@ -145,6 +158,9 @@ class FilterMatchForm(FlaskForm):
 						(3, "Evening"), (4, "Night")])
 
 	location = StringField('Location', validators=[Optional()])
+
+	players_maxnumber = IntegerField('Number of Players',
+					validators=[Optional()])
 
 	sport_id = SelectField('Sport', validators=[Optional()])
 

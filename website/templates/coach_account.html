@@ -47,12 +47,14 @@
 					        {{ form.sports(class="form-select h-75", multiple="") }}
             		</div>
             	</div>
-            	<div class="row mt-3">
-            		<div class="col">
-            			{{ form.card.label(class="form-label") }}
-					        {{ form.card(class="form-control") }}
-            		</div>
-            	</div>
+            	{% if plan == "Premium" %}
+	            	<div class="row mt-3">
+	            		<div class="col">
+	            			{{ form.card.label(class="form-label") }}
+						        {{ form.card(class="form-control") }}
+	            		</div>
+	            	</div>
+            	{% endif %}
             	<div class="row mt-3">
 								<div class="col text-center">
 					    		{{ form.submit(class="btn btn-primary") }}
