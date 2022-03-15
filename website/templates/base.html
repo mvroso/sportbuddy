@@ -6,17 +6,17 @@
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
 
   {% if title %}
-    <title>SportBuddy - {{ title }}</title>
+    <title>Sports Buddy - {{ title }}</title>
   {% else %}
-    <title>SportBuddy</title>
+    <title>Sports Buddy</title>
   {% endif %}
   
   <meta content="" name="description">
   <meta content="" name="keywords">
 
   <!-- Favicons -->
-  <link href="{{ url_for('static', filename='img/sportbuddy-icon.ico') }}" rel="icon">
-  <link href="{{ url_for('static', filename='img/sportbuddy-icon.ico') }}" rel="apple-touch-icon">
+  <link href="{{ url_for('static', filename='img/sportsbuddy-icon.ico') }}" rel="icon">
+  <link href="{{ url_for('static', filename='img/sportsbuddy-icon.ico') }}" rel="apple-touch-icon">
 
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Muli:300,300i,400,400i,500,500i,600,600i,700,700i|Poppins:300,300i,400,400i,500,500i,600,600i,700,700i" rel="stylesheet">
@@ -47,14 +47,8 @@
   <section id="topbar" class="d-flex align-items-center">
     <div class="container d-flex justify-content-center justify-content-md-between">
       <div class="contact-info d-flex align-items-center">
-        <i class="bi bi-envelope d-flex align-items-center"><a href="mailto:contact@example.com">contact@sportbuddy.com</a></i>
-        <i class="bi bi-phone d-flex align-items-center ms-4"><span>+39 331 9999 999</span></i>
-      </div>
-      <div class="social-links d-none d-md-flex align-items-center">
-        <a href="#" class="twitter"><i class="bi bi-twitter"></i></a>
-        <a href="#" class="facebook"><i class="bi bi-facebook"></i></a>
-        <a href="#" class="instagram"><i class="bi bi-instagram"></i></a>
-        <a href="#" class="linkedin"><i class="bi bi-linkedin"></i></i></a>
+        <i class="bi bi-envelope d-flex align-items-center"><a href="mailto:contact@example.com">contact@sportsbuddy.com</a></i>
+        <i class="bi bi-phone d-flex align-items-center ms-4"><span>+39 331 999 9999</span></i>
       </div>
     </div>
   </section>
@@ -64,38 +58,63 @@
     <div class="container d-flex justify-content-between">
 
       <div class="logo">
-        <h1 class="text-light"><a href="{{ url_for('index') }}">Sport Buddy</a></h1>
+        <h1 class="text-light"><a href="{{ url_for('index') }}">Sports Buddy</a></h1>
         <!-- Uncomment below if you prefer to use an image logo -->
-        <!-- <a href="index.html"><img src="assets/img/logo.png" alt="" class="img-fluid"></a>-->
+        <!--<a href="{{ url_for('index') }}"><img src="{{ url_for('static', filename='/img/sportsbuddy-logo.png') }}" alt="" class="img-fluid"></a>-->
       </div>
 
       <nav id="navbar" class="navbar">
         <ul>
-          <li><a class="active" href="{{ url_for('index') }}">Home</a></li>
-          <li><a href="{{ url_for('create_match') }}">Create Match</a></li>
-          <li><a href="{{ url_for('account') }}">Account</a></li>
-          <li><a href="{{ url_for('login') }}">Login</a></li>
-          <li><a href="{{ url_for('register') }}">Register</a></li>
-          <li><a href="portfolio.html">Portfolio</a></li>
-          <li><a href="blog.html">Blog</a></li>
+          <li><a {% if title == "Home" %}class="active"{% endif %} href="{{ url_for('index') }}">Home</a></li>
+          <li><a {% if title == "About" %}class="active"{% endif %} href="{{ url_for('about') }}">About</a></li>
+          {% if current_user.is_authenticated %}
+          {% if current_user.role.name != "Company" %}
           <li class="dropdown"><a href="#"><span>Match</span> <i class="bi bi-chevron-down"></i></a>
             <ul>
               <li><a href="{{ url_for('create_match') }}">Create Match</a></li>
-              <li class="dropdown"><a href="#"><span>Deep Drop Down</span> <i class="bi bi-chevron-right"></i></a>
-                <ul>
-                  <li><a href="#">Deep Drop Down 1</a></li>
-                  <li><a href="#">Deep Drop Down 2</a></li>
-                  <li><a href="#">Deep Drop Down 3</a></li>
-                  <li><a href="#">Deep Drop Down 4</a></li>
-                  <li><a href="#">Deep Drop Down 5</a></li>
-                </ul>
-              </li>
               <li><a href="{{ url_for('find_match') }}">Find Match</a></li>
-              <li><a href="#">Drop Down 3</a></li>
-              <li><a href="#">Drop Down 4</a></li>
+              <li><a href="{{ url_for('filter_match') }}">Filter Match</a></li>
             </ul>
           </li>
-          <li><a href="{{ url_for('contact') }}">Contact</a></li>
+          {% endif %}
+          {% if current_user.role.name != "Company" %}
+          <li class="dropdown"><a href="#"><span>Coach</span> <i class="bi bi-chevron-down"></i></a>
+            <ul>
+              {% if current_user.role.name == "Coach" %}
+              <li><a href="{{ url_for('coach_account') }}">Coach Account</a></li>
+              <li><a href="{{ url_for('plans') }}">Pricing Plans</a></li>
+              {% endif %}
+              <li><a href="{{ url_for('find_coach') }}">Find Coach</a></li>
+              <li><a href="{{ url_for('filter_coach') }}">Filter Coach</a></li>
+            </ul>
+          </li>
+          {% endif %}
+          <li class="dropdown"><a href="#"><span>Event</span> <i class="bi bi-chevron-down"></i></a>
+            <ul>
+              {% if current_user.role.name == "Company" %}
+              <li><a href="{{ url_for('create_event') }}">Create Event</a></li>
+              {% endif %}
+              <li><a href="{{ url_for('find_event') }}">Find Event</a></li>
+              <li><a href="{{ url_for('filter_event') }}">Filter Event</a></li>
+            </ul>
+          </li>
+          <li class="dropdown"><a href="#"><span>Profile</span> <i class="bi bi-chevron-down"></i></a>
+            <ul>
+              <li><a href="{{ url_for('account') }}">User Account</a></li>
+              {% if current_user.role.name == "Coach" %}
+              <li><a href="{{ url_for('coach_account') }}">Coach Account</a></li>
+              {% endif %}
+              {% if current_user.role.name != "Company" %}
+              <li><a href="{{ url_for('summary_match') }}">My Matches</a></li>
+              {% endif %}
+              <li><a href="{{ url_for('summary_event') }}">My Events</a></li>
+              <li><a href="{{ url_for('logout') }}">Logout</a></li>
+            </ul>
+          </li>
+          {% else %}
+          <li><a {% if title == "Login" %}class="active"{% endif %} href="{{ url_for('login') }}">Login</a></li>
+          <li><a {% if title == "Register" %}class="active"{% endif %} href="{{ url_for('register') }}">Register</a></li>
+          {% endif %}
         </ul>
         <i class="bi bi-list mobile-nav-toggle"></i>
       </nav><!-- .navbar -->
@@ -150,37 +169,34 @@
               Corso Duca degli Abruzzi, 24 <br>
               Torino, TO 10129<br>
               Italia <br><br>
-              <strong>Phone:</strong> +39 331 9999 999<br>
-              <strong>Email:</strong> contact@sportbuddy.com<br>
+              <strong>Phone:</strong> +39 331 999 9999<br>
+              <strong>Email:</strong> contact@sportsbuddy.com<br>
             </p>
           </div>
 
           <div class="col-lg-2 col-md-6 footer-links">
             <h4>Useful Links</h4>
             <ul>
-              <li><i class="bx bx-chevron-right"></i> <a href="#">Home</a></li>
-              <li><i class="bx bx-chevron-right"></i> <a href="#">About us</a></li>
-              <li><i class="bx bx-chevron-right"></i> <a href="#">Services</a></li>
-              <li><i class="bx bx-chevron-right"></i> <a href="#">Terms of service</a></li>
-              <li><i class="bx bx-chevron-right"></i> <a href="#">Privacy policy</a></li>
+              <li><i class="bx bx-chevron-right"></i> <a href="{{ url_for('index') }}">Home</a></li>
+              <li><i class="bx bx-chevron-right"></i> <a href="{{ url_for('about') }}">About us</a></li>
             </ul>
           </div>
 
           <div class="col-lg-3 col-md-6 footer-links">
             <h4>Our Services</h4>
             <ul>
-              <li><i class="bx bx-chevron-right"></i> <a href="#">Create a team</a></li>
-              <li><i class="bx bx-chevron-right"></i> <a href="#">Find a team</a></li>
-              <li><i class="bx bx-chevron-right"></i> <a href="#">Match opponent</a></li>
-              <li><i class="bx bx-chevron-right"></i> <a href="#">Coaching sessions</a></li>
-              <li><i class="bx bx-chevron-right"></i> <a href="#">Events</a></li>
+              <li><i class="bx bx-chevron-right"></i> <a href="{{ url_for('create_match') }}">Create a Match</a></li>
+              <li><i class="bx bx-chevron-right"></i> <a href="{{ url_for('find_match') }}">Find a Match</a></li>
+              <li><i class="bx bx-chevron-right"></i> <a href="{{ url_for('filter_match') }}">Search for opponents</a></li>
+              <li><i class="bx bx-chevron-right"></i> <a href="{{ url_for('find_coach') }}">Coaching sessions</a></li>
+              <li><i class="bx bx-chevron-right"></i> <a href="{{ url_for('find_event') }}">Events</a></li>
             </ul>
           </div>
 
           <div class="col-lg-4 col-md-6 footer-newsletter">
             <h4>Join Our Newsletter</h4>
             <p>Be the first to know the latest news about our platform!</p>
-            <form action="" method="post">
+            <form action="#" method="get">
               <input type="email" name="email"><input type="submit" value="Subscribe">
             </form>
           </div>
@@ -193,7 +209,7 @@
 
       <div class="me-md-auto text-center text-md-start">
         <div class="copyright">
-          &copy; Copyright <strong><span>Sport Buddy</span></strong>. All Rights Reserved
+          &copy; Copyright <strong><span>Sports Buddy</span></strong>. All Rights Reserved
         </div>
         <div class="credits">
           <!-- All the links in the footer should remain intact. -->
@@ -203,13 +219,7 @@
           Designed by <a href="https://bootstrapmade.com/">BootstrapMade</a>
         </div>
       </div>
-      <div class="social-links text-center text-md-right pt-3 pt-md-0">
-        <a href="#" class="twitter"><i class="bx bxl-twitter"></i></a>
-        <a href="#" class="facebook"><i class="bx bxl-facebook"></i></a>
-        <a href="#" class="instagram"><i class="bx bxl-instagram"></i></a>
-        <a href="#" class="google-plus"><i class="bx bxl-skype"></i></a>
-        <a href="#" class="linkedin"><i class="bx bxl-linkedin"></i></a>
-      </div>
+      
     </div>
   </footer><!-- End Footer -->
 

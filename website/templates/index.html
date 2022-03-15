@@ -1,131 +1,129 @@
 {% extends "base.html" %}
 {% block content %}
-  <main id="main">
 
-      <!-- ======= Hero Section ======= -->
-  <section id="hero">
-    <div id="heroCarousel" data-bs-interval="5000" class="carousel slide carousel-fade" data-bs-ride="carousel">
+<!-- ======= Hero Section ======= -->
+<section id="hero">
+  <div id="heroCarousel" data-bs-interval="5000" class="carousel slide carousel-fade" data-bs-ride="carousel">
 
-      <div class="carousel-inner" role="listbox">
+    <div class="carousel-inner" role="listbox">
 
-        <!-- Slide 1 -->
-        <div class="carousel-item active" style="background-image: url({{ url_for('static', filename='img/slide/slide-1.jpg') }});">
-          <div class="carousel-container">
-            <div class="carousel-content animate__animated animate__fadeInUp">
-              <h2>Welcome to <span>SportsBuddy</span></h2>
-              <p>We are a platform that connects people with same sports interests and availabilities so that they can arrange to be active together. We promote enjoyment, companionship and healthy lifestyle for all our users.</p>
-              <div class="text-center"><a href="" class="btn-get-started">Read More</a></div>
-            </div>
+      <!-- Slide 1 -->
+      <div class="carousel-item active" style="background-image: url({{ url_for('static', filename='img/slide/slide-1.jpg') }});">
+        <div class="carousel-container">
+          <div class="carousel-content animate__animated animate__fadeInUp">
+            <h2>Welcome to <span>Sports Buddy</span></h2>
+            <p>We are a platform that connects people with same sports interests and availabilities so that they can arrange to be active together. We promote enjoyment, companionship and healthy lifestyle for all our users.</p>
+            <div class="text-center"><a href="{{ url_for('about') }}" class="btn-get-started">Read More</a></div>
           </div>
         </div>
-
-        <!-- Slide 2 -->
-        <div class="carousel-item" style="background-image: url({{ url_for('static', filename='img/slide/slide-2.jpg') }});">
-          <div class="carousel-container">
-            <div class="carousel-content animate__animated animate__fadeInUp">
-              <h2>Meet the developing team</h2>
-              <p>A very competent team composed by 6 members very fond of sports from PoliTo studying Masters in Engineering and Management, we developed this platform combining our expertise in Information System envisioning a more connect future among people.</p>
-              <div class="text-center"><a href="" class="btn-get-started">Read More</a></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Slide 3 -->
-        <div class="carousel-item" style="background-image: url({{ url_for('static', filename='img/slide/slide-3.jpg') }});">
-          <div class="carousel-container">
-            <div class="carousel-content animate__animated animate__fadeInUp">
-              <h2>Be a part of SportsBuddy</h2>
-              <p>Our platform also offers coaching sessions for a range of different sports promoting coaches associates with us. To associate with us, start by clicking the button below.</p>
-              <div class="text-center"><a href="" class="btn-get-started">Read More</a></div>
-            </div>
-          </div>
-        </div>
-
       </div>
 
-      <a class="carousel-control-prev" href="#heroCarousel" role="button" data-bs-slide="prev">
-        <span class="carousel-control-prev-icon bx bx-left-arrow" aria-hidden="true"></span>
-      </a>
+      <!-- Slide 2 -->
+      <div class="carousel-item" style="background-image: url({{ url_for('static', filename='img/slide/slide-2.jpg') }});">
+        <div class="carousel-container">
+          <div class="carousel-content animate__animated animate__fadeInUp">
+            <h2>Meet the developing team</h2>
+            <p>A very competent team composed by 6 members very fond of sports from PoliTo studying Masters in Engineering and Management, we developed this platform combining our expertise in Information System envisioning a more connect future among people.</p>
+            <div class="text-center"><a href="{{ url_for('about') }}" class="btn-get-started">Read More</a></div>
+          </div>
+        </div>
+      </div>
 
-      <a class="carousel-control-next" href="#heroCarousel" role="button" data-bs-slide="next">
-        <span class="carousel-control-next-icon bx bx-right-arrow" aria-hidden="true"></span>
-      </a>
-
-      <ol class="carousel-indicators" id="hero-carousel-indicators"></ol>
+      <!-- Slide 3 -->
+      <div class="carousel-item" style="background-image: url({{ url_for('static', filename='img/slide/slide-3.jpg') }});">
+        <div class="carousel-container">
+          <div class="carousel-content animate__animated animate__fadeInUp">
+            <h2>Be a part of SportsBuddy</h2>
+            <p>Our platform also offers coaching sessions for a range of different sports promoting coaches associates with us. To associate with us, start by clicking the button below.</p>
+            <div class="text-center"><a href="{{ url_for('about') }}" class="btn-get-started">Read More</a></div>
+          </div>
+        </div>
+      </div>
 
     </div>
-  </section><!-- End Hero -->
 
-  <main id="main">
+    <a class="carousel-control-prev" href="#heroCarousel" role="button" data-bs-slide="prev">
+      <span class="carousel-control-prev-icon bx bx-left-arrow" aria-hidden="true"></span>
+    </a>
 
-    <!-- ======= Cta Section ======= -->
-    <section id="cta" class="cta">
-      <div class="container">
+    <a class="carousel-control-next" href="#heroCarousel" role="button" data-bs-slide="next">
+      <span class="carousel-control-next-icon bx bx-right-arrow" aria-hidden="true"></span>
+    </a>
 
-        <div class="row">
-          <div class="col-lg-9 text-center text-lg-left">
-            <h3>We've matched more than <span>300 games</span> this year!</h3>
-            <p> From individual players who seek an opponent to play against to team sports which seek a solo player to complete the team and be able to compete, we offer a range of solutions to make your sport match happen!</p>
-          </div>
-          <div class="col-lg-3 cta-btn-container text-center">
-            <a class="cta-btn align-middle" href="#">connect now</a>
+    <ol class="carousel-indicators" id="hero-carousel-indicators"></ol>
+
+  </div>
+</section><!-- End Hero -->
+
+<main id="main">
+
+  <!-- ======= Cta Section ======= -->
+  <section id="cta" class="cta">
+    <div class="container">
+
+      <div class="row">
+        <div class="col-lg-9 text-center text-lg-left">
+          <h3>We've matched more than <span>300 games</span> this year!</h3>
+          <p> From individual players who seek an opponent to play against to team sports which seek a solo player to complete the team and be able to compete, we offer a range of solutions to make your sport match happen!</p>
+        </div>
+        <div class="col-lg-3 cta-btn-container text-center">
+          <a class="cta-btn align-middle" href="{{ url_for('find_match') }}">connect now</a>
+        </div>
+      </div>
+
+    </div>
+  </section><!-- End Cta Section -->
+
+  <!-- ======= Services Section ======= -->
+  <section id="services" class="services">
+    <div class="container">
+
+      <div class="row">
+        <div class="col-lg-4 col-md-6">
+          <div class="icon-box" data-aos="fade-up">
+            <div class="icon"><i class="bi bi-briefcase"></i></div>
+            <h4 class="title"><a href="#">Build a team</a></h4>
+            <p class="description">Build a team in our platform and invite others to participate, be it your friend or other sport enthusiasts with the same interest</p>
           </div>
         </div>
-
-      </div>
-    </section><!-- End Cta Section -->
-
-    <!-- ======= Services Section ======= -->
-    <section id="services" class="services">
-      <div class="container">
-
-        <div class="row">
-          <div class="col-lg-4 col-md-6">
-            <div class="icon-box" data-aos="fade-up">
-              <div class="icon"><i class="bi bi-briefcase"></i></div>
-              <h4 class="title"><a href="">Build a team</a></h4>
-              <p class="description">Build a team in our platform and invite others to participate, be it your friend or other sport enthusiasts with the same interest</p>
-            </div>
-          </div>
-          <div class="col-lg-4 col-md-6">
-            <div class="icon-box" data-aos="fade-up" data-aos-delay="100">
-              <div class="icon"><i class="bi bi-card-checklist"></i></div>
-              <h4 class="title"><a href="">Find a team</a></h4>
-              <p class="description">For lone sport players, we can help you to find an already existing team to join and have fun with new people</p>
-            </div>
-          </div>
-          <div class="col-lg-4 col-md-6">
-            <div class="icon-box" data-aos="fade-up" data-aos-delay="200">
-              <div class="icon"><i class="bi bi-bar-chart"></i></div>
-              <h4 class="title"><a href="">Coaching sessions </a></h4>
-              <p class="description">Sports enthusiasts that want to improve your skills and be coached by a professional can also use our platform to connect with one of our associated coaches</p>
-            </div>
-          </div>
-          <div class="col-lg-4 col-md-6">
-            <div class="icon-box" data-aos="fade-up" data-aos-delay="200">
-              <div class="icon"><i class="bi bi-binoculars"></i></div>
-              <h4 class="title"><a href="">Match an opponent</a></h4>
-              <p class="description">For both individual and team sports, our platform have build-in matching system that helps you to find the perfect opponent</p>
-            </div>
-          </div>
-          <div class="col-lg-4 col-md-6">
-            <div class="icon-box" data-aos="fade-up" data-aos-delay="300">
-              <div class="icon"><i class="bi bi-brightness-high"></i></div>
-              <h4 class="title"><a href="">Partnerships</a></h4>
-              <p class="description">Our sport partners is going to help all users to have a better experience during the physical activity</p>
-            </div>
-          </div>
-          <div class="col-lg-4 col-md-6">
-            <div class="icon-box" data-aos="fade-up" data-aos-delay="400">
-              <div class="icon"><i class="bi bi-calendar4-week"></i></div>
-              <h4 class="title"><a href="">Events</a></h4>
-              <p class="description">Be notified about all major sports events that is interest for you and participate them with ease through our platform</p>
-            </div>
+        <div class="col-lg-4 col-md-6">
+          <div class="icon-box" data-aos="fade-up" data-aos-delay="100">
+            <div class="icon"><i class="bi bi-card-checklist"></i></div>
+            <h4 class="title"><a href="#">Find a team</a></h4>
+            <p class="description">For lone sport players, we can help you to find an already existing team to join and have fun with new people</p>
           </div>
         </div>
-
+        <div class="col-lg-4 col-md-6">
+          <div class="icon-box" data-aos="fade-up" data-aos-delay="200">
+            <div class="icon"><i class="bi bi-bar-chart"></i></div>
+            <h4 class="title"><a href="#">Coaching sessions </a></h4>
+            <p class="description">Sports enthusiasts that want to improve your skills and be coached by a professional can also use our platform to connect with one of our associated coaches</p>
+          </div>
+        </div>
+        <div class="col-lg-4 col-md-6">
+          <div class="icon-box" data-aos="fade-up" data-aos-delay="200">
+            <div class="icon"><i class="bi bi-binoculars"></i></div>
+            <h4 class="title"><a href="#">Match an opponent</a></h4>
+            <p class="description">For both individual and team sports, our platform have build-in matching system that helps you to find the perfect opponent</p>
+          </div>
+        </div>
+        <div class="col-lg-4 col-md-6">
+          <div class="icon-box" data-aos="fade-up" data-aos-delay="300">
+            <div class="icon"><i class="bi bi-brightness-high"></i></div>
+            <h4 class="title"><a href="#">Partnerships</a></h4>
+            <p class="description">Our sport partners is going to help all users to have a better experience during the physical activity</p>
+          </div>
+        </div>
+        <div class="col-lg-4 col-md-6">
+          <div class="icon-box" data-aos="fade-up" data-aos-delay="400">
+            <div class="icon"><i class="bi bi-calendar4-week"></i></div>
+            <h4 class="title"><a href="#">Events</a></h4>
+            <p class="description">Be notified about all major sports events that is interest for you and participate them with ease through our platform</p>
+          </div>
+        </div>
       </div>
-    </section><!-- End Services Section -->
 
-  </main><!-- End #main -->
+    </div>
+  </section><!-- End Services Section -->
+
 {% endblock content %}

@@ -18,19 +18,23 @@
 							{{ form.hidden_tag() }}
             	
             	<div class="row mt-3">
-            		<div class="col">
-            			{{ form.name.label(class="form-label") }}
-					        {{ form.name(class="form-control") }}
+            		<div class="col-sm-8">
+            			{{ form.title.label(class="form-label") }}
+					        {{ form.title(class="form-control") }}
             		</div>
+                <div class="col-sm-4">
+                  {{ form.date.label(class="form-label") }}
+                  {{ form.date(class="form-control") }}
+                </div>
             	</div>
             	<div class="row mt-3">
             		<div class="col-sm-4">
-            			{{ form.hourly_rate.label(class="form-label") }}
-                  {{ form.hourly_rate(class="form-control") }}
+            			{{ form.location.label(class="form-label") }}
+                  {{ form.location(class="form-control") }}
             		</div>
             		<div class="col-sm-4">
-            			{{ form.gender.label(class="form-label") }}
-					        {{ form.gender(class="form-select") }}
+            			{{ form.price.label(class="form-label") }}
+					        {{ form.price(class="form-control") }}
             		</div>
                 <div class="col-sm-4">
                   {{ form.sport_id.label(class="form-label") }}

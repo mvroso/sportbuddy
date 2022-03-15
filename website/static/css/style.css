@@ -841,7 +841,7 @@ section {
   margin-left: 60px;
 }
 .about-us .image {
-  background: url("../img/about.jpg") center center no-repeat;
+  background: url("../img/team/image-about.jpeg") center center no-repeat;
   background-size: cover;
   min-height: 400px;
 }

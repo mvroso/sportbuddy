@@ -34,11 +34,8 @@ class User(db.Model, UserMixin):
     # relationship = User | one to Many | Match
     matches = db.relationship('Match', backref='owner', lazy=True)
 
-    '''
-     ***** ALTERAR NO FUTURO QUANDO DECIDIRMOS SE VAMOS IMPLEMENTAR MENSAGENS (OU NAO) *****
-    # relationship = User | one to Many | Message
-    messages = db.relationship('User', backref='role', lazy=True)
-    '''
+    # relationship = User | one to Many | Event
+    events = db.relationship('Event', backref='owner', lazy=True)
 
     # generate a reset password token that expires in 10 minutes
     def get_reset_token(self, expires_sec=600):
@@ -126,7 +123,6 @@ class Match(db.Model):
     date = db.Column(db.Date, nullable=False, default=date.today)
     players_maxnumber = db.Column(db.Integer, nullable=False, default=2)
 
-    # ***** MUDAR PARA UM PONTO GEOGRAFICO DEPOIS ?????? *****
     location = db.Column(db.String(50), nullable=False, default='Torino')
 
     # foreign key = Sport
@@ -145,6 +141,41 @@ class Match(db.Model):
     def __repr__(self):
         return f"Match('{self.title}', '{self.date}', '{self.sport.name}')"
 
+# Helper table for Event attendees
+attendees = db.Table('attendees',
+    db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
+    db.Column('event_id', db.Integer, db.ForeignKey('event.id'), primary_key=True)
+    )
+
+class Event(db.Model):
+    __tablename__ = 'event'
+
+    # primary key
+    id = db.Column(db.Integer, primary_key=True)
+
+    title = db.Column(db.String(50), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    date = db.Column(db.Date, nullable=False, default=date.today)
+    price = db.Column(db.Numeric, nullable=False, default=10)
+    attendees_maxnumber = db.Column(db.Integer, nullable=False, default=50)
+
+    location = db.Column(db.String(50), nullable=False, default='Torino')
+
+    # background file
+    background_file = db.Column(db.String(20), nullable=False, default='background.jpg')
+
+    # foreign key = Sport
+    sport_id = db.Column(db.Integer, db.ForeignKey('sport.id'), nullable=False)
+
+    # foreign key = User
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    # relationship = User | Many to Many | Match
+    attendees = db.relationship('User', secondary=attendees, lazy='subquery',
+        backref=db.backref('event', lazy=True))
+
+    def __repr__(self):
+        return f"Event('{self.title}', '{self.date}', '{self.location}')"
 
 
 # Class description
@@ -173,6 +204,9 @@ class Sport(db.Model):
 
     # relationship = Sport | one to Many | Match
     matches = db.relationship('Match', backref='sport', lazy=True)
+
+    # relationship = Sport | one to Many | Event
+    events = db.relationship('Event', backref='sport', lazy=True)
 
     def __repr__(self):
         return f"Sport('{self.name}')"
