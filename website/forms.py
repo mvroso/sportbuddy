@@ -61,7 +61,7 @@ class UpdateAccountForm(FlaskForm):
 	email = EmailField('E-mail Adress',
 				validators=[DataRequired(), Email()])
 	picture = FileField('Profile Picture',
-					validators=[FileAllowed(['jpg', 'png'])])
+					validators=[FileAllowed(['jpg', 'jpeg', 'png'])])
 	submit = SubmitField('Update')
 
 	def validate_email(self, email):
@@ -186,7 +186,7 @@ class EventFormMixin():
 	location = StringField('Location', validators=[Length(min=2, max=50)])
 
 	background = FileField('Background Picture',
-					validators=[FileAllowed(['jpg', 'png'])])
+					validators=[FileAllowed(['jpg', 'jpeg', 'png'])])
 
 	sport_id = SelectField('Sport', coerce=int)
 

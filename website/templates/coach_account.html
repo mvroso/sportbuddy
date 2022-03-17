@@ -12,9 +12,9 @@
         <div class="blog-author d-flex align-items-center">
           <img src="{{ image_file }}" class="rounded-circle float-left" alt="">
           <div>
-            <h4>{{ current_user.name }}</h4>
+            <h4>Coach {{ current_user.name }}</h4>
             <p>
-              {{ current_user.email }}
+              {% if plan == "Free" %}Free{% else %}Premium{% endif %} Plan
             </p>
           </div>
         </div><!-- End blog author bio -->

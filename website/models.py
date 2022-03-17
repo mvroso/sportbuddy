@@ -162,7 +162,7 @@ class Event(db.Model):
     location = db.Column(db.String(50), nullable=False, default='Torino')
 
     # background file
-    background_file = db.Column(db.String(20), nullable=False, default='background.jpg')
+    background_file = db.Column(db.String(20), nullable=False, default='background-1.jpg')
 
     # foreign key = Sport
     sport_id = db.Column(db.Integer, db.ForeignKey('sport.id'), nullable=False)

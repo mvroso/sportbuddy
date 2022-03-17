@@ -98,11 +98,10 @@ def send_reset_email(user):
     msg = Message('Password Reset Request',
             sender='noreply@sportbuddy.com', recipients=[user.email])
 
-    msg.body = f'''To reset your password, visit the following link:
-{ url_for('reset_password', token=token, _external=True) }
+    msg.body = f"To reset your password, visit the following link:\n\n" \
+            f"{url_for('reset_password', token=token, _external=True)}\n\n" \
+            f"If you did not make this request then simply ignore this email."
 
-If you did not make this request then simply ignore this email.
-'''
     mail.send(msg)
 
 @app.route("/reset_password_request", methods=['GET', 'POST'])
@@ -145,7 +144,7 @@ def reset_password(token):
 
 
 # Save user uploaded picture in /static/img/profile_pictures
-def save_picture(form_picture, size):
+def save_picture(form_picture, width, height):
     random_hex = secrets.token_hex(8)
     _, f_ext = os.path.splitext(form_picture.filename)
     picture_fn = random_hex + f_ext
@@ -153,7 +152,7 @@ def save_picture(form_picture, size):
                 'static/img/profile_pictures', picture_fn)
     
     # Resize picture with Pillow
-    output_size = (size, size)
+    output_size = (width, height)
     img = Image.open(form_picture)
     img.thumbnail(output_size)
     img.save(picture_path)
@@ -167,7 +166,7 @@ def account():
     form = UpdateAccountForm()
     if form.validate_on_submit():
         if form.picture.data:
-            picture_file = save_picture(form.picture.data, 125)
+            picture_file = save_picture(form.picture.data, 200, 200)
             current_user.image_file = picture_file
 
         current_user.name = form.name.data
@@ -200,7 +199,7 @@ def coach_account():
 
     if form.validate_on_submit():
         if form.card.data:
-            card_file = save_picture(form.card.data, 250)
+            card_file = save_picture(form.card.data, 400, 400)
             coach.card_file = card_file
 
         coach.hourly_rate = round(form.hourly_rate.data, 2)
@@ -246,6 +245,10 @@ def coach_account():
 @app.route("/match/create", methods=['GET', 'POST'])
 @login_required
 def create_match():
+    if current_user.role.name == "Company":
+        flash('Your cannot access this page!', 'danger')
+        return redirect(url_for('index'))
+
     form = CreateMatchForm()
     form.sport_id.choices = [(row.id, row.name) for row 
                                 in Sport.query.order_by('name')]
@@ -274,10 +277,12 @@ def create_match():
 
 # Show a list of existing matches
 @app.route("/match/find")
-@app.route("/match/find/<int:sport_id>/<int:time_period_id>/<date>/<title>/<location>/<description>/<int:players_maxnumber>")
+@app.route("/match/find/<int:sport_id>/<int:time_period_id>/<date>/<match_title>/<location>/<description>/<int:players_maxnumber>/<int:page>")
 @login_required
-def find_match(sport_id=0, time_period_id=0, date="-", title="-", location="-", description="-", players_maxnumber=0):
-    page = request.args.get('page', 1, type=int)
+def find_match(page=1, sport_id=0, time_period_id=0, date="-", match_title="-", location="-", description="-", players_maxnumber=0):
+    if current_user.role.name == "Company":
+        flash('Your cannot access this page!', 'danger')
+        return redirect(url_for('index'))
 
     # Builds the search query
     query = or_(Match.date >= datetime.now())
@@ -291,8 +296,8 @@ def find_match(sport_id=0, time_period_id=0, date="-", title="-", location="-", 
     if date != "-":
         query = and_(query, Match.date == date)
 
-    if title != "-":
-        query = and_(query, Match.title.like("%" + title + "%"))
+    if match_title != "-":
+        query = and_(query, Match.title.like("%" + match_title + "%"))
         
     if location != "-":
         query = and_(query, Match.location.like('%' + location + '%'))
@@ -306,14 +311,22 @@ def find_match(sport_id=0, time_period_id=0, date="-", title="-", location="-", 
     
     matches = Match.query.filter(query) \
             .order_by(Match.date.asc()) \
-            .paginate(page=page, per_page=8)
+            .paginate(page=page, per_page=6)
 
-    return render_template('find_match.html', title='Find Match', matches=matches)
+    return render_template('find_match.html', title='Find Match', 
+        matches=matches,
+        sport_id=sport_id, time_period_id=time_period_id, date=date,
+        match_title=match_title, location=location, description=description,
+        players_maxnumber=players_maxnumber)
 
 # Filter a list of existing matches
 @app.route("/match/filter", methods=['GET', 'POST'])
 @login_required
 def filter_match():
+    if current_user.role.name == "Company":
+        flash('Your cannot access this page!', 'danger')
+        return redirect(url_for('index'))
+
     form = FilterMatchForm()
 
     sport_list = [(row.id, row.name) for row 
@@ -331,15 +344,15 @@ def filter_match():
             sport_id = form.sport_id.data
             time_period_id = form.time_period.data
             date = form.date.data
-            title = form.title.data
+            match_title = form.title.data
             location = form.location.data
             description = form.description.data
             players_maxnumber = form.players_maxnumber.data
 
             if date == None:
                 date = "-"
-            if not title:
-                title = "-"
+            if not match_title:
+                match_title = "-"
             if not location:
                 location = "-"
             if not description:
@@ -349,35 +362,44 @@ def filter_match():
 
 
             return redirect(url_for('find_match', sport_id=sport_id, time_period_id=time_period_id,
-                    date=date, title=title, location=location, description=description,
-                    players_maxnumber=players_maxnumber))
+                    date=date, match_title=match_title, location=location, description=description,
+                    players_maxnumber=players_maxnumber, page=1))
 
     return render_template('create_update_match.html', title='Filter Match', form=form)
 
 
 # Summarizes the matches that the user is involved
 @app.route("/match/summary")
+@app.route("/match/summary/<int:sport_id>/<int:time_period_id>/<date>/<match_title>/<location>/<description>/<int:players_maxnumber>/<int:page>")
 @login_required
-def summary_match():
+def summary_match(page=1, sport_id=0, time_period_id=0, date="-", match_title="-", location="-", description="-", players_maxnumber=0):
     if current_user.role.name == "Company":
         flash('Your cannot access this page!', 'danger')
         return redirect(url_for('index'))
 
-    page = request.args.get('page', 1, type=int)
+    #page = request.args.get('page', 1, type=int)
 
     # Builds the search query
     query = or_(Match.owner == current_user, Match.players.any(id=current_user.id))
 
     matches = Match.query.filter(query) \
             .order_by(Match.date.asc()) \
-            .paginate(page=page, per_page=8)
+            .paginate(page=page, per_page=6)
 
-    return render_template('find_match.html', title='Summary Match', matches=matches)
+    return render_template('find_match.html', title='Summary Match', 
+        matches=matches,
+        sport_id=sport_id, time_period_id=time_period_id, date=date,
+        match_title=match_title, location=location, description=description,
+        players_maxnumber=players_maxnumber)
 
 # Show details of a single match
 @app.route("/match/<int:match_id>/details")
 @login_required
 def details_match(match_id):
+    if current_user.role.name == "Company":
+        flash('Your cannot access this page!', 'danger')
+        return redirect(url_for('index'))
+
     match = Match.query.get_or_404(match_id)
 
     # Join Button
@@ -392,6 +414,10 @@ def details_match(match_id):
 @app.route("/match/<int:match_id>/join", methods=['POST'])
 @login_required
 def join_match(match_id):
+    if current_user.role.name == "Company":
+        flash('Your cannot access this page!', 'danger')
+        return redirect(url_for('index'))
+
     match = Match.query.get_or_404(match_id)
 
     if current_user == match.owner:
@@ -416,6 +442,10 @@ def join_match(match_id):
 @app.route("/match/<int:match_id>/quit", methods=['POST'])
 @login_required
 def quit_match(match_id):
+    if current_user.role.name == "Company":
+        flash('Your cannot access this page!', 'danger')
+        return redirect(url_for('index'))
+
     match = Match.query.get_or_404(match_id)
 
     if current_user == match.owner:
@@ -532,10 +562,12 @@ def delete_match(match_id):
 
 # Show a list of existing coaches
 @app.route("/coach/find")
-@app.route("/coach/find/<int:gender_id>/<int:sport_id>/<hourly_rate>/<name>")
+@app.route("/coach/find/<int:sport_id>/<int:gender_id>/<hourly_rate>/<name>/<int:page>")
 @login_required
-def find_coach(gender_id=0, sport_id=0, hourly_rate=0, name="-"):
-    page = request.args.get('page', 1, type=int)
+def find_coach(page=1, gender_id=0, sport_id=0, hourly_rate=0, name="-"):
+    if current_user.role.name == "Company":
+        flash('Your cannot access this page!', 'danger')
+        return redirect(url_for('index'))
 
     # Builds the search query
     query = or_(Coach.hourly_rate >= 0)
@@ -557,16 +589,23 @@ def find_coach(gender_id=0, sport_id=0, hourly_rate=0, name="-"):
             .paginate(page=page, per_page=4)
 
     premium_coaches = Coach.query.filter(query, Coach.plan_id == 2) \
-            .order_by(Coach.name.asc())
+            .order_by(Coach.name.asc()) \
+            .limit(4)
 
-    return render_template('find_coach.html', title='Find Coach', coaches=coaches, premium_coaches=premium_coaches)
+    return render_template('find_coach.html', title='Find Coach', 
+        coaches=coaches, premium_coaches=premium_coaches, 
+        sport_id=sport_id, gender_id=gender_id, hourly_rate=hourly_rate,
+        name=name)
 
 
 # Filter a list of existing coaches
 @app.route("/coach/filter", methods=['GET', 'POST'])
 @login_required
 def filter_coach():
-    
+    if current_user.role.name == "Company":
+        flash('Your cannot access this page!', 'danger')
+        return redirect(url_for('index'))
+
     form = FilterCoachForm()
 
     sport_list = [(row.id, row.name) for row 
@@ -588,7 +627,7 @@ def filter_coach():
                 hourly_rate = 0
 
             return redirect(url_for('find_coach', sport_id=sport_id, name=name,
-                    gender_id=gender, hourly_rate=hourly_rate))
+                    gender_id=gender, hourly_rate=hourly_rate, page=1))
 
     return render_template('filter_coach.html', title='Filter Coach', form=form)
 
@@ -597,6 +636,10 @@ def filter_coach():
 @app.route("/coach/<int:coach_id>/details")
 @login_required
 def details_coach(coach_id):
+    if current_user.role.name == "Company":
+        flash('Your cannot access this page!', 'danger')
+        return redirect(url_for('index'))
+
     coach = Coach.query.get_or_404(coach_id)
 
     if coach.gender_id == 1:
@@ -658,25 +701,23 @@ def create_event():
                 owner=current_user)
 
             if form.background.data:
-                background_file = save_picture(form.background.data, 250)
+                background_file = save_picture(form.background.data, 1320, 440)
                 event.background_file = background_file
 
             db.session.add(event)
             db.session.commit()
 
             flash('Your event has been created!', 'success')
-            return redirect(url_for('index'))
+            return redirect(url_for('find_event'))
         else:
             flash('Your event has not been created! Check your inputs', 'danger')
     return render_template('create_update_event.html', title='Create Event', form=form, legend='Create')
 
 # Show a list of existing events
 @app.route("/event/find")
-@app.route("/event/find/<int:sport_id>/<title>/<date>/<price>/<location>")
+@app.route("/event/find/<int:sport_id>/<event_title>/<date>/<price>/<location>/<int:page>")
 @login_required
-def find_event(sport_id=0, title="-", date="-", price=0, location="-"):
-    page = request.args.get('page', 1, type=int)
-
+def find_event(page=1, sport_id=0, event_title="-", date="-", price=0, location="-"):
     
     # Builds the search query
     query = or_(Event.date >= datetime.now())
@@ -684,8 +725,8 @@ def find_event(sport_id=0, title="-", date="-", price=0, location="-"):
     if sport_id != 0:
         query = and_(query, Event.sport_id == sport_id)
 
-    if title != "-":
-        query = and_(query, Event.title.like("%" + title + "%"))
+    if event_title != "-":
+        query = and_(query, Event.title.like("%" + event_title + "%"))
 
     if date != "-":
         query = and_(query, Event.date == date)
@@ -698,9 +739,12 @@ def find_event(sport_id=0, title="-", date="-", price=0, location="-"):
 
     events = Event.query.filter(query) \
             .order_by(Event.date.asc()) \
-            .paginate(page=page, per_page=8)
+            .paginate(page=page, per_page=6)
 
-    return render_template('find_event.html', title='Find Event', events=events)
+    return render_template('find_event.html', title='Find Event', 
+            events=events,
+            sport_id=sport_id, event_title=event_title, date=date,
+            price=price, location=location)
 
 
 # Filter a list of existing events
@@ -719,13 +763,13 @@ def filter_event():
         if form.validate_on_submit():
 
             sport_id = form.sport_id.data
-            title = form.title.data
+            event_title = form.title.data
             date = form.date.data
             price = form.price.data
             location = form.location.data
 
-            if not title:
-                title = "-"
+            if not event_title:
+                event_title = "-"
             if not date:
                 date = "-"
             if not price:
@@ -733,8 +777,9 @@ def filter_event():
             if not location:
                 location = "-"
 
-            return redirect(url_for('find_event', sport_id=sport_id, title=title,
-                    date=date, price=price, location=location))
+            return redirect(url_for('find_event', sport_id=sport_id, 
+                    event_title=event_title, date=date, 
+                    price=price, location=location, page=1))
 
     return render_template('filter_event.html', title='Filter Event', form=form)
 
@@ -788,7 +833,7 @@ def update_event(event_id):
             event.sport_id = form.sport_id.data
 
             if form.background.data:
-                background_file = save_picture(form.background.data, 250)
+                background_file = save_picture(form.background.data, 1320, 440)
                 event.background_file = background_file
 
             db.session.commit()
@@ -854,23 +899,21 @@ def buy_ticket_event(event_id):
 
 # Summarizes the events that the user is involved
 @app.route("/event/summary")
+@app.route("/event/summary/<int:sport_id>/<event_title>/<date>/<price>/<location>/<int:page>")
 @login_required
-def summary_event():
-    page = request.args.get('page', 1, type=int)
+def summary_event(page=1, sport_id=0, event_title="-", date="-", price=0, location="-"):
 
     # Builds the search query
     query = or_(Event.owner == current_user, Event.attendees.any(id=current_user.id))
 
     events = Event.query.filter(query) \
             .order_by(Event.date.asc()) \
-            .paginate(page=page, per_page=8)
+            .paginate(page=page, per_page=6)
 
-    return render_template('find_event.html', title='Summary Event', events=events)
-
-
-
-
-
+    return render_template('find_event.html', title='Summary Event', 
+            events=events,
+            sport_id=sport_id, event_title=event_title, date=date,
+            price=price, location=location)
 
 
 
@@ -885,6 +928,57 @@ def summary_event():
 
 
 
+
+
+
+
+@app.route("/teste")
+def teste():
+
+    hashed_password = bcrypt.generate_password_hash(
+                                    "123").decode('utf-8')
+
+    user_1 = User(name='Susanna Onio',
+            email='susannaonio@teste.com',
+            password=hashed_password,
+            gender_id=2)
+
+    db.session.add(user_1)
+
+    user_2 = User(name='Agenore Bruno',
+                email='agenorebruno@teste.com',
+                password=hashed_password,
+                gender_id=1)
+
+    db.session.add(user_2)
+
+    user_3 = User(name='Amalio Davide',
+                email='amaliodavide@teste.com',
+                password=hashed_password,
+                gender_id=1)
+
+    db.session.add(user_3)
+
+    db.session.commit()
+
+    match_1 = Match(title='Beach Volley with Friends',
+                description=('We play every day to train for a competition '
+                    'in October. If you are interested come join us!'),
+                date=datetime.strptime('2022-04-02', "%Y-%m-%d").date(),
+                players_maxnumber=4,
+                location='CUS Torino',
+                sport_id=7,
+                time_period_id=3,
+                owner=user_1)
+    
+    match_1.players.append(user_2)
+    match_1.players.append(user_3)
+    
+    db.session.add(match_1)
+
+    db.session.commit()
+
+    return redirect(url_for('index'))
 
 
 
@@ -914,91 +1008,797 @@ def insertdata():
     db.session.commit()
     
     
-    # Create six standard sports
-    sport_1 = Sport(name='Basketball')
-    sport_2 = Sport(name='Tennis')
-    sport_3 = Sport(name='Fencing')
-    sport_4 = Sport(name='Judo')
-    sport_5 = Sport(name='Volleyball')
-    sport_6 = Sport(name='Boxing')
-
+    # Create standard sports
+    sport_1 = Sport(name='Archery')
     db.session.add(sport_1)
+
+    sport_2 = Sport(name='Artistic Gymnastics')
     db.session.add(sport_2)
+
+    sport_3 = Sport(name='Artistic Swimming')
     db.session.add(sport_3)
+
+    sport_4 = Sport(name='Athletics')
     db.session.add(sport_4)
+
+    sport_5 = Sport(name='Badminton')
     db.session.add(sport_5)
+
+    sport_6 = Sport(name='Basketball')
     db.session.add(sport_6)
+
+    sport_7 = Sport(name='Beach Volleyball')
+    db.session.add(sport_7)
+
+    sport_8 = Sport(name='Biathlon')
+    db.session.add(sport_8)
+
+    sport_9 = Sport(name='BMX Racing')
+    db.session.add(sport_9)
+
+    sport_10 = Sport(name='Boxing')
+    db.session.add(sport_10)
+
+    sport_11 = Sport(name='Diving')
+    db.session.add(sport_11)
+
+    sport_12 = Sport(name='Equestrian')
+    db.session.add(sport_12)
+
+    sport_13 = Sport(name='Fencing')
+    db.session.add(sport_13)
+
+    sport_14 = Sport(name='Golf')
+    db.session.add(sport_14)
+
+    sport_15 = Sport(name='Handball')
+    db.session.add(sport_15)
+
+    sport_16 = Sport(name='Hockey')
+    db.session.add(sport_16)
+
+    sport_17 = Sport(name='Judo')
+    db.session.add(sport_17)
+
+    sport_18 = Sport(name='Kayak Flatwater')
+    db.session.add(sport_18)
+
+    sport_19 = Sport(name='Kayak Slalom')
+    db.session.add(sport_19)
+
+    sport_20 = Sport(name='Marathon Swimming')
+    db.session.add(sport_20)
+
+    sport_21 = Sport(name='Modern Pentatlhlon')
+    db.session.add(sport_21)
+
+    sport_22 = Sport(name='Montain Bike')
+    db.session.add(sport_22)
+
+    sport_23 = Sport(name='Rhythmic Gymnastics')
+    db.session.add(sport_23)
+
+    sport_24 = Sport(name='Road Cycling')
+    db.session.add(sport_24)
+
+    sport_25 = Sport(name='Rowing')
+    db.session.add(sport_25)
+
+    sport_26 = Sport(name='Rugby')
+    db.session.add(sport_26)
+
+    sport_27 = Sport(name='Sailing')
+    db.session.add(sport_27)
+
+    sport_28 = Sport(name='Soccer')
+    db.session.add(sport_28)
+
+    sport_29 = Sport(name='Surfing')
+    db.session.add(sport_29)
+
+    sport_30 = Sport(name='Swimming')
+    db.session.add(sport_30)
+
+    sport_31 = Sport(name='Table Tennis')
+    db.session.add(sport_31)
+
+    sport_32 = Sport(name='Tennis')
+    db.session.add(sport_32)
+
+    sport_33 = Sport(name='Track Cycling')
+    db.session.add(sport_33)
+
+    sport_34 = Sport(name='Trampoline')
+    db.session.add(sport_34)
+
+    sport_35 = Sport(name='Triathlon')
+    db.session.add(sport_35)
+
+    sport_36 = Sport(name='Volleyball')
+    db.session.add(sport_36)
+
+    sport_37 = Sport(name='Water Polo')
+    db.session.add(sport_37)
+
+    sport_38 = Sport(name='Weight Lifting')
+    db.session.add(sport_38)
+
+    sport_39 = Sport(name='Wrestling')
+    db.session.add(sport_39)
+
     db.session.commit()
 
+    # Create standard users
     hashed_password = bcrypt.generate_password_hash(
                                     "123").decode('utf-8')
-    # Create several standard coaches
-    coach_1 = Coach(name='Gabriel Sanches',
-                        email='gabrielsanches@teste.com',
-                        gender_id=1, # male
-                        role_id=2, # coach
+
+    user_1 = User(name='Susanna Onio',
+            email='susannaonio@teste.com',
+            password=hashed_password,
+            gender_id=2)
+
+    db.session.add(user_1)
+
+    user_2 = User(name='Agenore Bruno',
+                email='agenorebruno@teste.com',
+                password=hashed_password,
+                gender_id=1)
+
+    db.session.add(user_2)
+
+    user_3 = User(name='Amalio Davide',
+                email='amaliodavide@teste.com',
+                password=hashed_password,
+                gender_id=1)
+
+    db.session.add(user_3)
+
+    user_4 = User(name='Sandra Romani',
+                email='sandraromani@teste.com',
+                password=hashed_password,
+                gender_id=2)
+
+    db.session.add(user_4)
+
+    user_5 = User(name='Maria Pia Udinese',
+                email='mariapiaudinese@teste.com',
+                password=hashed_password,
+                gender_id=2)
+
+    db.session.add(user_5)
+
+    user_6 = User(name='Ornella Lettiere',
+                email='ornellalettiere@teste.com',
+                password=hashed_password,
+                gender_id=2)
+
+    db.session.add(user_6)
+
+    user_7 = User(name='Bernardo Genovesi',
+                email='bernardogenovesi@teste.com',
+                password=hashed_password,
+                gender_id=1)
+
+    db.session.add(user_7)
+
+    user_8 = User(name='Matteo Cattaneo',
+                email='matteocattaneo@teste.com',
+                password=hashed_password,
+                gender_id=1)
+
+    db.session.add(user_8)
+
+    user_9 = User(name='Antonio Greece',
+                email='antoniogreece',
+                password=hashed_password,
+                gender_id=1)
+
+    db.session.add(user_9)
+
+    user_10 = User(name='Ignazio Loggia',
+                email='ignaziologgia@teste.com',
+                password=hashed_password,
+                gender_id=1)
+
+    db.session.add(user_10)
+
+    user_11 = User(name='Raffaella Genovesi',
+                email='raffaellagenovesi@teste.com',
+                password=hashed_password,
+                gender_id=2)
+
+    db.session.add(user_11)
+
+    user_12 = User(name='Cecilia Calabrese',
+                email='ceciliacalabrese@teste.com',
+                password=hashed_password,
+                gender_id=2)
+
+    db.session.add(user_12)
+
+    user_13 = User(name='Innocenzo Pisano',
+                email='innocenzopisano@teste.com',
+                password=hashed_password,
+                gender_id=1)
+
+    db.session.add(user_13)
+
+    user_14 = User(name='Amerigo Udinesi',
+                email='amerigoudinesi@teste.com',
+                password=hashed_password,
+                gender_id=1)
+
+    db.session.add(user_14)
+
+    user_15 = User(name='Aloisa Trentino',
+                email='aloisatrentino@teste.com',
+                password=hashed_password,
+                gender_id=2)
+
+    db.session.add(user_15)
+
+    user_16 = User(name='Enrico Russo',
+                email='enricorusso@teste.com',
+                password=hashed_password,
+                gender_id=1)
+
+    db.session.add(user_16)
+
+    user_17 = User(name='Gennaro Milano',
+                email='gennaromilano@teste.com',
+                password=hashed_password,
+                gender_id=1)
+
+    db.session.add(user_17)
+
+    user_18 = User(name='Erminia Udinese',
+                email='erminiaudinese@teste.com',
+                password=hashed_password,
+                gender_id=2)
+
+    db.session.add(user_18)
+
+    user_19 = User(name='Brigida Milani',
+                email='brigidamilani@teste.com',
+                password=hashed_password,
+                gender_id=2)
+
+    db.session.add(user_19)
+
+    user_20 = User(name='Raffaele Lombardi',
+                email='raffaelelombardi@teste.com',
+                password=hashed_password,
+                gender_id=1)
+
+    db.session.add(user_20)
+
+    db.session.commit()
+
+    # Create standard coaches
+    descr = ("I am a skilled Coach with 10 plus years of experience "
+        "and in-depth knowledge of college athletic program regulations "
+        "and mentoring of athletes. I consistently motivate and inspire "
+        "players to bring their best to every game. My mission as a coach "
+        "is to take the gifts young athletes have been blessed with and "
+        "turn them into skills that will help them succeed on and off "
+        "the court. I am an expert in recognizing and working on players' "
+        "weakness and strengths by developing customized training sessions.")
+
+    coach_1 = Coach(name='Adelaide Fiorentini',
+                        email='adelaidefiorentini@teste.com',
+                        gender_id=2,
+                        role_id=2, 
                         password=hashed_password,
                         plan_id=1,
-                        hourly_rate=20.52, # random decimal with .00 (2) precision between 10 and 150
-                        phone_number='3314432435') # it MUST be in this format
-    coach_1 = Coach(name='Gabriel1',
-                        email='gabriel1@teste.com',
-                        gender_id=1,
-                        role_id=2,
-                        password=hashed_password,
-                        plan_id=2)
-    coach_2 = Coach(name='Gabriel2',
-                        email='gabriel2@teste.com',
-                        gender_id=1,
-                        role_id=2,
-                        password=hashed_password,
-                        plan_id=2)
-    coach_3 = Coach(name='Gabriel3',
-                        email='gabriel3@teste.com',
-                        gender_id=1,
-                        role_id=2,
-                        password=hashed_password,
-                        plan_id=2)
-    coach_4 = Coach(name='Gabriel4',
-                        email='gabriel4@teste.com',
-                        gender_id=1,
-                        role_id=2,
-                        password=hashed_password)
-    coach_5 = Coach(name='Gabriel5',
-                        email='gabriel5@teste.com',
-                        gender_id=1,
-                        role_id=2,
-                        password=hashed_password)
-    coach_6 = Coach(name='Gabriel6',
-                        email='gabriel6@teste.com',
-                        gender_id=1,
-                        role_id=2,
-                        password=hashed_password)
-    coach_7 = Coach(name='Gabriel7',
-                        email='gabriel7@teste.com',
-                        gender_id=1,
-                        role_id=2,
-                        password=hashed_password)
-    coach_8 = Coach(name='Gabriel8',
-                        email='gabriel8@teste.com',
-                        gender_id=1,
-                        role_id=2,
-                        password=hashed_password)
-    
+                        hourly_rate=40.00, 
+                        phone_number='3315532635', 
+                        image_file='image-4.jpg',
+                        description = descr)
     db.session.add(coach_1)
+
+
+
+    coach_2 = Coach(name='Alceo Marchesi',
+                        email='alceomarchesi@teste.com',
+                        gender_id=1,
+                        role_id=2, 
+                        password=hashed_password,
+                        plan_id=1,
+                        hourly_rate=45.00, 
+                        phone_number='3337432636', 
+                        image_file='image-1.jpg',
+                        description = descr)
     db.session.add(coach_2)
+
+                        
+    coach_3 = Coach(name='Siro Marcelo',
+                        email='siromarcelo@teste.com',
+                        gender_id=1,
+                        role_id=2, 
+                        password=hashed_password,
+                        plan_id=1,
+                        hourly_rate=80.00, 
+                        phone_number='3404332567', 
+                        image_file='image-2.jpg',
+                        description = descr)
     db.session.add(coach_3)
+
+                        
+    coach_4 = Coach(name='Adele Baresi',
+                        email='adelebaresi@teste.com',
+                        gender_id=2,
+                        role_id=2, 
+                        password=hashed_password,
+                        plan_id=1,
+                        hourly_rate=75.00, 
+                        phone_number='3452435622', 
+                        image_file='image-5.jpg',
+                        description = descr)
     db.session.add(coach_4)
+
+                        
+    coach_5 = Coach(name='Gabriel Sanches',
+                        email='gabrielsanches@teste.com',
+                        gender_id=1,
+                        role_id=2, 
+                        password=hashed_password,
+                        plan_id=1,
+                        hourly_rate=40.00, 
+                        phone_number='3314432435', 
+                        image_file='image-3.jpg',
+                        description = descr)
     db.session.add(coach_5)
+
+                        
+    coach_6 = Coach(name='Agatino Fallaci',
+                        email='agatinofallaci@teste.com',
+                        gender_id=1,
+                        role_id=2, 
+                        password=hashed_password,
+                        plan_id=1,
+                        hourly_rate=55.00, 
+                        phone_number='3317312436', 
+                        image_file='image-1.jpg',
+                        description = descr)
     db.session.add(coach_6)
+
+                        
+    coach_7 = Coach(name='Gianetto Mazzi',
+                        email='gianettomazzi@teste.com',
+                        gender_id=1,
+                        role_id=2, 
+                        password=hashed_password,
+                        plan_id=1,
+                        hourly_rate=60.00, 
+                        phone_number='3474432599', 
+                        image_file='image-2.jpg',
+                        description = descr)
     db.session.add(coach_7)
+
+
+                        
+    coach_8 = Coach(name='Facondo Lombardo',
+                        email='facondolombardo@teste.com',
+                        gender_id=1,
+                        role_id=2, 
+                        password=hashed_password,
+                        plan_id=1,
+                        hourly_rate=90.00, 
+                        phone_number='3664532892', 
+                        image_file='image-3.jpg',
+                        description = descr)
     db.session.add(coach_8)
+
+                        
+    coach_9 = Coach(name='Vittoria Toscano',
+                        email='vittoriatoscano@teste.com',
+                        gender_id=2,
+                        role_id=2, 
+                        password=hashed_password,
+                        plan_id=1,
+                        hourly_rate=75.00, 
+                        phone_number='3317922835', 
+                        image_file='image-6.jpg',
+                        description = descr)
+    db.session.add(coach_9)
+
+                        
+    coach_10 = Coach(name='Marcella Davide',
+                        email='marcelladavide@teste.com',
+                        gender_id=2,
+                        role_id=2, 
+                        password=hashed_password,
+                        plan_id=1,
+                        hourly_rate=50.00, 
+                        phone_number='3397292987', 
+                        image_file='image-4.jpg',
+                        description = descr)
+    db.session.add(coach_10)
+
+                        
+    coach_11 = Coach(name='Cornelio Dellucci',
+                        email='corneliodellucci@teste.com',
+                        gender_id=1,
+                        role_id=2, 
+                        password=hashed_password,
+                        plan_id=1,
+                        hourly_rate=30.00, 
+                        phone_number='3334451932', 
+                        image_file='image-1.jpg',
+                        description = descr)
+    db.session.add(coach_11)
+
+                        
+    coach_12 = Coach(name='Diego Greco',
+                        email='diegogreco@teste.com',
+                        gender_id=1,
+                        role_id=2, 
+                        password=hashed_password,
+                        plan_id=1,
+                        hourly_rate=100.00, 
+                        phone_number='3234932237', 
+                        image_file='image-2.jpg',
+                        description = descr)
+    db.session.add(coach_12)
+
+                        
+    coach_13 = Coach(name='Leda Mancini',
+                        email='ledamancini@teste.com',
+                        gender_id=2,
+                        role_id=2, 
+                        password=hashed_password,
+                        plan_id=1,
+                        hourly_rate=60.00, 
+                        phone_number='3664533536', 
+                        image_file='image-5.jpg',
+                        description = descr)
+    db.session.add(coach_13)
+
+                        
+    coach_14 = Coach(name='Luciano Palermo',
+                        email='lucianopalermo@teste.com',
+                        gender_id=1,
+                        role_id=2, 
+                        password=hashed_password,
+                        plan_id=1,
+                        hourly_rate=45.00, 
+                        phone_number='3338732945', 
+                        image_file='image-3.jpg',
+                        description = descr)
+    db.session.add(coach_14)
+
+                        
+    coach_15 = Coach(name='Egidio Belluci',
+                        email='egidiobelluci@teste.com',
+                        gender_id=1,
+                        role_id=2, 
+                        password=hashed_password,
+                        plan_id=1,
+                        hourly_rate=85.00, 
+                        phone_number='3884634435', 
+                        image_file='image-1.jpg',
+                        description = descr)
+    db.session.add(coach_15)
+
+                        
+    coach_16 = Coach(name='Roberto Mancini',
+                        email='robertomancini@teste.com',
+                        gender_id=1,
+                        role_id=2, 
+                        password=hashed_password,
+                        plan_id=1,
+                        hourly_rate=95.00, 
+                        phone_number='3464643235', 
+                        image_file='image-2.jpg',
+                        description = descr)
+    db.session.add(coach_16)
+
+                        
+    coach_17 = Coach(name='Prospero Russo',
+                        email='prosperorusso@teste.com',
+                        gender_id=1,
+                        role_id=2, 
+                        password=hashed_password,
+                        plan_id=1,
+                        hourly_rate=49.00, 
+                        phone_number='3317832933', 
+                        image_file='image-3.jpg',
+                        description = descr)
+    db.session.add(coach_17)
+
+                        
+    coach_18 = Coach(name='Aldo Longo',
+                        email='aldolongo@teste.com',
+                        gender_id=1,
+                        role_id=2, 
+                        password=hashed_password,
+                        plan_id=1,
+                        hourly_rate=55.00, 
+                        phone_number='3335634431', 
+                        image_file='image-1.jpg',
+                        description = descr)
+    db.session.add(coach_18)
+
+                        
+    coach_19 = Coach(name='Pasqualina Lombardi',
+                        email='pasqualinalombardi@teste.com',
+                        gender_id=2,
+                        role_id=2, 
+                        password=hashed_password,
+                        plan_id=2,
+                        hourly_rate=60.00, 
+                        phone_number='3317412936', 
+                        image_file='image-6.jpg',
+                        description = descr)
+    db.session.add(coach_19)
+
+                        
+    coach_20 = Coach(name='Giulia Li Fonti',
+                        email='giulialifonti@teste.com',
+                        gender_id=2,
+                        role_id=2, 
+                        password=hashed_password,
+                        plan_id=2,
+                        hourly_rate=50.00, 
+                        phone_number='3604433935', 
+                        image_file='image-4.jpg',
+                        description = descr)
+    db.session.add(coach_20)
+
+                        
+    coach_21 = Coach(name='Aladino Esposito',
+                        email='aladinoesposito@teste.com',
+                        gender_id=1,
+                        role_id=2, 
+                        password=hashed_password,
+                        plan_id=1,
+                        hourly_rate=120.00, 
+                        phone_number='3314937255', 
+                        image_file='image-2.jpg',
+                        description = descr)
+    db.session.add(coach_21)
+
+                        
+    coach_22 = Coach(name='Norma Sal',
+                        email='normasal@teste.com',
+                        gender_id=2,
+                        role_id=2, 
+                        password=hashed_password,
+                        plan_id=2,
+                        hourly_rate=45.00, 
+                        phone_number='3357042039', 
+                        image_file='image-5.jpg',
+                        description = descr)
+    db.session.add(coach_22)
+
+                        
+    coach_23 = Coach(name='Consuelo Lucchesi',
+                        email='consuelolucchesi@teste.com',
+                        gender_id=1,
+                        role_id=2, 
+                        password=hashed_password,
+                        plan_id=1,
+                        hourly_rate=15.00, 
+                        phone_number='3334902705', 
+                        image_file='image-3.jpg',
+                        description = descr)
+    db.session.add(coach_23)
+
+                        
+    coach_24 = Coach(name='Ubalda Lorenzo',
+                        email='ubaldalorenzo@teste.com',
+                        gender_id=2,
+                        role_id=2, 
+                        password=hashed_password,
+                        plan_id=2,
+                        hourly_rate=95.00, 
+                        phone_number='3376534237', 
+                        image_file='image-6.jpg',
+                        description = descr)
+    db.session.add(coach_24)
+
+                        
+    coach_25 = Coach(name='Emanuelle Pisano',
+                        email='emanuellepisano@teste.com',
+                        gender_id=1,
+                        role_id=2, 
+                        password=hashed_password,
+                        plan_id=2,
+                        hourly_rate=70.00, 
+                        phone_number='3397232921', 
+                        image_file='image-1.jpg',
+                        description = descr)
+    db.session.add(coach_25)
+
+                        
+    coach_26 = Coach(name='Dora Genovese',
+                        email='doragenovese@teste.com',
+                        gender_id=2,
+                        role_id=2, 
+                        password=hashed_password,
+                        plan_id=1,
+                        hourly_rate=110.00, 
+                        phone_number='3319944713', 
+                        image_file='image-4.jpg',
+                        description = descr)
+    db.session.add(coach_26)
+
+                        
+    coach_27 = Coach(name='Matteo Lombardi',
+                        email='matteolombardi@teste.com',
+                        gender_id=1,
+                        role_id=2, 
+                        password=hashed_password,
+                        plan_id=2,
+                        hourly_rate=60.00, 
+                        phone_number='3701572448', 
+                        image_file='image-3.jpg',
+                        description = descr)
+    db.session.add(coach_27)
+
+                        
+    coach_28 = Coach(name='Rodrigo Napolitani',
+                        email='rodrigonapolitani@teste.com',
+                        gender_id=1,
+                        role_id=2, 
+                        password=hashed_password,
+                        plan_id=2,
+                        hourly_rate=55.00, 
+                        phone_number='3312985355', 
+                        image_file='image-2.jpg',
+                        description = descr)
+    db.session.add(coach_28)
+
+                        
+    coach_29 = Coach(name='Berta Milano',
+                        email='bertamilano@teste.com',
+                        gender_id=2,
+                        role_id=2, 
+                        password=hashed_password,
+                        plan_id=1,
+                        hourly_rate=55.00, 
+                        phone_number='3314317866', 
+                        image_file='image-5.jpg',
+                        description = descr)
+    db.session.add(coach_29)
+
+                        
+    coach_30 = Coach(name='Paola Longo',
+                        email='paolalongo@teste.com',
+                        gender_id=2,
+                        role_id=2, 
+                        password=hashed_password,
+                        plan_id=1,
+                        hourly_rate=90.00, 
+                        phone_number='3336732961', 
+                        image_file='image-6.jpg',
+                        description = descr)
+    db.session.add(coach_30)
+
     db.session.commit()
+
+    match_1 = Match(title='Beach Volley with Friends',
+                description=('We play every day to train for a competition '
+                    'in October. If you are interested come join us!'),
+                date=datetime.strptime('2022-04-02', "%Y-%m-%d").date(),
+                players_maxnumber=4,
+                location='CUS Torino',
+                sport_id=7,
+                time_period_id=3,
+                owner=user_1)
     
-    '''
-    # Create one standard match
-    match_1 = Match(title='title', sport_id=1, user_id=1)
+    match_1.players.append(user_2)
+    match_1.players.append(user_3)
+    
     db.session.add(match_1)
+
+    match_2 = Match(title='Judo Training Session!',
+                description=("I'm trying to get my belt promotion so I'm "
+                    "looking for people to train with!! Come join me!"),
+                date=datetime.strptime('2022-04-13', "%Y-%m-%d").date(),
+                players_maxnumber=6,
+                location='CUS Torino',
+                sport_id=17,
+                time_period_id=1,
+                owner=user_5)
+    
+    match_2.players.append(user_4)
+    match_2.players.append(user_3)
+    
+    db.session.add(match_2)
+
+    match_3 = Match(title='Soccer with the Piqué Blinders',
+                description=('Hello guys, me and my team (the Piqué Blinders) '
+                    'are looking for friends to play soccer. Join us!'),
+                date=datetime.strptime('2022-05-01', "%Y-%m-%d").date(),
+                players_maxnumber=10,
+                location='Parco Valentino',
+                sport_id=28,
+                time_period_id=4,
+                owner=user_2)
+    
+    match_3.players.append(user_4)
+    match_3.players.append(user_5)
+    
+    db.session.add(match_3)
+
+    match_4 = Match(title='Boxing in Torino!',
+                description=('Ciao!!! Looking for a boxing partner for a '
+                    'training session next week. See you in the ring!!'),
+                date=datetime.strptime('2022-04-22', "%Y-%m-%d").date(),
+                players_maxnumber=2,
+                location='CUS Torino',
+                sport_id=10,
+                time_period_id=1,
+                owner=user_1)
+    
+    match_4.players.append(user_2)
+    
+    
+    db.session.add(match_4)
+
+    match_5 = Match(title='Road to NBA!',
+                description=("Do you think you can beat the Dunkin' Donuts? "
+                    "Come find out!!!"),
+                date=datetime.strptime('2022-05-12', "%Y-%m-%d").date(),
+                players_maxnumber=10,
+                location='Campi da Basket Braccini',
+                sport_id=6,
+                time_period_id=3,
+                owner=user_6)
+    
+    match_5.players.append(user_7)
+    match_5.players.append(user_3)
+    
+    db.session.add(match_5)
+
+    match_6 = Match(title='Rugby team recruiting!',
+                description=('Hey big guy! Come to our recruiting session '
+                    'to show us your skills!!!'),
+                date=datetime.strptime('2022-04-14', "%Y-%m-%d").date(),
+                players_maxnumber=20,
+                location='Parco Valentino',
+                sport_id=26,
+                time_period_id=2,
+                owner=user_7)
+    
+    match_6.players.append(user_10)
+    match_6.players.append(user_5)
+    
+    db.session.add(match_6)
+
+    match_7 = Match(title='Sailing Event - Coconut Grove, Miami',
+                description=('It is a-boat time you start learning to sail! '
+                    'Come join us!!!'),
+                date=datetime.strptime('2022-06-15', "%Y-%m-%d").date(),
+                players_maxnumber=25,
+                location='Coconut Grove',
+                sport_id=27,
+                time_period_id=1,
+                owner=user_4)
+    
+    match_7.players.append(user_15)
+    match_7.players.append(user_13)
+    match_7.players.append(user_11)
+    
+    db.session.add(match_7)
+
+    match_8 = Match(title='Volleyball with Friends',
+                description=('We play every day to train for a competition '
+                    'in October. If you are interested come join us!'),
+                date=datetime.strptime('2022-06-02', "%Y-%m-%d").date(),
+                players_maxnumber=8,
+                location='LÉMAN ARCHERY',
+                sport_id=1,
+                time_period_id=2,
+                owner=user_7)
+    
+    match_8.players.append(user_2)
+    match_8.players.append(user_9)
+
+    db.session.add(match_8)
+
     db.session.commit()
-    '''
+
+    flash('The database was populated', 'info')
     return redirect(url_for('index'))
