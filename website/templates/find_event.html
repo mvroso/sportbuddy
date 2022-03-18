@@ -10,7 +10,7 @@
   		<div class="col-4 text-end">
   			{% if title != "Summary Event" %}
   			<p>Filter:
-	      <a role="button" class="btn btn-light" href="{{ url_for('filter_event') }}">
+	      <a role="button" class="btn btn-light" href="{{ url_for('events.filter_event') }}">
 	        <i class="bi-search"></i>
 	      </a></p>
 	      {% else %}
@@ -29,7 +29,7 @@
 	          </div>
 	          <div class="col col-lg-11 col-md-10 col-8">
 	          <h3>
-	          <a href="{{ url_for('details_event', event_id=event.id) }}">
+	          <a href="{{ url_for('events.details_event', event_id=event.id) }}">
 	          	{{ event.title | truncate(20) | title }}
 	          </a>
 	          </h3>
@@ -46,9 +46,9 @@
 
     <div class="row mt-2">
     		{% if current_user.role.name != "Company" %}
-  			<p>Didn't find any events to go? You can <a href="{{ url_for('create_match') }}">Create your own Match</a> instead!</p>
+  			<p>Didn't find any events to go? You can <a href="{{ url_for('matches.create_match') }}">Create your own Match</a> instead!</p>
   			{% else %}
-  			<p>You can <a href="{{ url_for('create_event') }}">Create your own Event</a>!</p>
+  			<p>You can <a href="{{ url_for('events.create_event') }}">Create your own Event</a>!</p>
   			{% endif %}
   	</div>
 
@@ -57,15 +57,15 @@
 	  		{% if page_num %}
 	  			{% if events.page == page_num %}
 	  				{% if title == "Find Event" %}
-	  				<a class="btn btn-dark active mt-4" href="{{url_for('find_event', sport_id=sport_id, event_title=event_title, date=date, price=price, location=location, page=page_num) }}">{{ page_num }}</a>
+	  				<a class="btn btn-dark active mt-4" href="{{url_for('events.find_event', sport_id=sport_id, event_title=event_title, date=date, price=price, location=location, page=page_num) }}">{{ page_num }}</a>
 	  				{% elif title == "Summary Event" %}
-	  				<a class="btn btn-dark active mt-4" href="{{url_for('summary_event', sport_id=sport_id, event_title=event_title, date=date, price=price, location=location, page=page_num) }}">{{ page_num }}</a>
+	  				<a class="btn btn-dark active mt-4" href="{{url_for('events.summary_event', sport_id=sport_id, event_title=event_title, date=date, price=price, location=location, page=page_num) }}">{{ page_num }}</a>
 	  				{% endif %}
 	  			{% else %}
 	  				{% if title == "Find Event" %}
-	  				<a class="btn btn-outline-dark mt-4" href="{{url_for('find_event', sport_id=sport_id, event_title=event_title, date=date, price=price, location=location, page=page_num) }}">{{ page_num }}</a>
+	  				<a class="btn btn-outline-dark mt-4" href="{{url_for('events.find_event', sport_id=sport_id, event_title=event_title, date=date, price=price, location=location, page=page_num) }}">{{ page_num }}</a>
 	  				{% elif title == "Summary Event" %}
-	  				<a class="btn btn-outline-dark mt-4" href="{{url_for('summary_event', sport_id=sport_id, event_title=event_title, date=date, price=price, location=location, page=page_num) }}">{{ page_num }}</a>
+	  				<a class="btn btn-outline-dark mt-4" href="{{url_for('events.summary_event', sport_id=sport_id, event_title=event_title, date=date, price=price, location=location, page=page_num) }}">{{ page_num }}</a>
 	  				{% endif %}
 	  			{% endif %}
 

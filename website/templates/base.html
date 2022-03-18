@@ -58,22 +58,22 @@
     <div class="container d-flex justify-content-between">
 
       <div class="logo">
-        <h1 class="text-light"><a href="{{ url_for('index') }}">Sports Buddy</a></h1>
+        <h1 class="text-light"><a href="{{ url_for('main.index') }}">Sports Buddy</a></h1>
         <!-- Uncomment below if you prefer to use an image logo -->
-        <!--<a href="{{ url_for('index') }}"><img src="{{ url_for('static', filename='/img/sportsbuddy-logo.png') }}" alt="" class="img-fluid"></a>-->
+        <!--<a href="{{ url_for('main.index') }}"><img src="{{ url_for('static', filename='/img/sportsbuddy-logo.png') }}" alt="" class="img-fluid"></a>-->
       </div>
 
       <nav id="navbar" class="navbar">
         <ul>
-          <li><a {% if title == "Home" %}class="active"{% endif %} href="{{ url_for('index') }}">Home</a></li>
-          <li><a {% if title == "About" %}class="active"{% endif %} href="{{ url_for('about') }}">About</a></li>
+          <li><a {% if title == "Home" %}class="active"{% endif %} href="{{ url_for('main.index') }}">Home</a></li>
+          <li><a {% if title == "About" %}class="active"{% endif %} href="{{ url_for('main.about') }}">About</a></li>
           {% if current_user.is_authenticated %}
           {% if current_user.role.name != "Company" %}
           <li class="dropdown"><a href="#"><span>Match</span> <i class="bi bi-chevron-down"></i></a>
             <ul>
-              <li><a href="{{ url_for('create_match') }}">Create Match</a></li>
-              <li><a href="{{ url_for('find_match') }}">Find Match</a></li>
-              <li><a href="{{ url_for('filter_match') }}">Filter Match</a></li>
+              <li><a href="{{ url_for('matches.create_match') }}">Create Match</a></li>
+              <li><a href="{{ url_for('matches.find_match') }}">Find Match</a></li>
+              <li><a href="{{ url_for('matches.filter_match') }}">Filter Match</a></li>
             </ul>
           </li>
           {% endif %}
@@ -81,39 +81,39 @@
           <li class="dropdown"><a href="#"><span>Coach</span> <i class="bi bi-chevron-down"></i></a>
             <ul>
               {% if current_user.role.name == "Coach" %}
-              <li><a href="{{ url_for('coach_account') }}">Coach Account</a></li>
-              <li><a href="{{ url_for('plans') }}">Pricing Plans</a></li>
+              <li><a href="{{ url_for('coaches.coach_account') }}">Coach Account</a></li>
+              <li><a href="{{ url_for('coaches.plans') }}">Pricing Plans</a></li>
               {% endif %}
-              <li><a href="{{ url_for('find_coach') }}">Find Coach</a></li>
-              <li><a href="{{ url_for('filter_coach') }}">Filter Coach</a></li>
+              <li><a href="{{ url_for('coaches.find_coach') }}">Find Coach</a></li>
+              <li><a href="{{ url_for('coaches.filter_coach') }}">Filter Coach</a></li>
             </ul>
           </li>
           {% endif %}
           <li class="dropdown"><a href="#"><span>Event</span> <i class="bi bi-chevron-down"></i></a>
             <ul>
               {% if current_user.role.name == "Company" %}
-              <li><a href="{{ url_for('create_event') }}">Create Event</a></li>
+              <li><a href="{{ url_for('events.create_event') }}">Create Event</a></li>
               {% endif %}
-              <li><a href="{{ url_for('find_event') }}">Find Event</a></li>
-              <li><a href="{{ url_for('filter_event') }}">Filter Event</a></li>
+              <li><a href="{{ url_for('events.find_event') }}">Find Event</a></li>
+              <li><a href="{{ url_for('events.filter_event') }}">Filter Event</a></li>
             </ul>
           </li>
           <li class="dropdown"><a href="#"><span>Profile</span> <i class="bi bi-chevron-down"></i></a>
             <ul>
-              <li><a href="{{ url_for('account') }}">User Account</a></li>
+              <li><a href="{{ url_for('users.account') }}">User Account</a></li>
               {% if current_user.role.name == "Coach" %}
-              <li><a href="{{ url_for('coach_account') }}">Coach Account</a></li>
+              <li><a href="{{ url_for('coaches.coach_account') }}">Coach Account</a></li>
               {% endif %}
               {% if current_user.role.name != "Company" %}
-              <li><a href="{{ url_for('summary_match') }}">My Matches</a></li>
+              <li><a href="{{ url_for('matches.summary_match') }}">My Matches</a></li>
               {% endif %}
-              <li><a href="{{ url_for('summary_event') }}">My Events</a></li>
-              <li><a href="{{ url_for('logout') }}">Logout</a></li>
+              <li><a href="{{ url_for('events.summary_event') }}">My Events</a></li>
+              <li><a href="{{ url_for('users.logout') }}">Logout</a></li>
             </ul>
           </li>
           {% else %}
-          <li><a {% if title == "Login" %}class="active"{% endif %} href="{{ url_for('login') }}">Login</a></li>
-          <li><a {% if title == "Register" %}class="active"{% endif %} href="{{ url_for('register') }}">Register</a></li>
+          <li><a {% if title == "Login" %}class="active"{% endif %} href="{{ url_for('users.login') }}">Login</a></li>
+          <li><a {% if title == "Register" %}class="active"{% endif %} href="{{ url_for('users.register') }}">Register</a></li>
           {% endif %}
         </ul>
         <i class="bi bi-list mobile-nav-toggle"></i>
@@ -132,7 +132,7 @@
         <div class="d-flex justify-content-between align-items-center">
           <h2>{{ title }}</h2>
           <ol>
-            <li><a href="{{ url_for('index') }}">Home</a></li>
+            <li><a href="{{ url_for('main.index') }}">Home</a></li>
             <li>{{ title }}</li>
           </ol>
         </div>
@@ -177,19 +177,19 @@
           <div class="col-lg-2 col-md-6 footer-links">
             <h4>Useful Links</h4>
             <ul>
-              <li><i class="bx bx-chevron-right"></i> <a href="{{ url_for('index') }}">Home</a></li>
-              <li><i class="bx bx-chevron-right"></i> <a href="{{ url_for('about') }}">About us</a></li>
+              <li><i class="bx bx-chevron-right"></i> <a href="{{ url_for('main.index') }}">Home</a></li>
+              <li><i class="bx bx-chevron-right"></i> <a href="{{ url_for('main.about') }}">About us</a></li>
             </ul>
           </div>
 
           <div class="col-lg-3 col-md-6 footer-links">
             <h4>Our Services</h4>
             <ul>
-              <li><i class="bx bx-chevron-right"></i> <a href="{{ url_for('create_match') }}">Create a Match</a></li>
-              <li><i class="bx bx-chevron-right"></i> <a href="{{ url_for('find_match') }}">Find a Match</a></li>
-              <li><i class="bx bx-chevron-right"></i> <a href="{{ url_for('filter_match') }}">Search for opponents</a></li>
-              <li><i class="bx bx-chevron-right"></i> <a href="{{ url_for('find_coach') }}">Coaching sessions</a></li>
-              <li><i class="bx bx-chevron-right"></i> <a href="{{ url_for('find_event') }}">Events</a></li>
+              <li><i class="bx bx-chevron-right"></i> <a href="{{ url_for('matches.create_match') }}">Create a Match</a></li>
+              <li><i class="bx bx-chevron-right"></i> <a href="{{ url_for('matches.find_match') }}">Find a Match</a></li>
+              <li><i class="bx bx-chevron-right"></i> <a href="{{ url_for('matches.filter_match') }}">Search for opponents</a></li>
+              <li><i class="bx bx-chevron-right"></i> <a href="{{ url_for('coaches.find_coach') }}">Coaching sessions</a></li>
+              <li><i class="bx bx-chevron-right"></i> <a href="{{ url_for('events.find_event') }}">Events</a></li>
             </ul>
           </div>
 

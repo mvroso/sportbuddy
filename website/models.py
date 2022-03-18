@@ -1,15 +1,12 @@
 from datetime import date
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
-from website import db, login_manager, app
+from website import db, login_manager
+from flask import current_app
 from flask_login import UserMixin
 
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
-
-# PROXIMOS PASSOS
-# CRIAR CLASSES EVENTO E INGRESSO
-# INSTALAR A CLASSE FLASK BOOTSTRAP DO VIDEO TEMPLATES E VER SE FAZ ALGUMA DIFERENCA
 
 # Class description
 class User(db.Model, UserMixin):
@@ -20,7 +17,7 @@ class User(db.Model, UserMixin):
 
     name = db.Column(db.String(50), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    password = db.Column(db.String(30), nullable=False)
+    password = db.Column(db.String(70), nullable=False)
 
     # Choices (Male = 1, Female = 2, Not applicable = 3)
     gender_id = db.Column(db.Integer, nullable=False, default=1)
@@ -39,13 +36,13 @@ class User(db.Model, UserMixin):
 
     # generate a reset password token that expires in 10 minutes
     def get_reset_token(self, expires_sec=600):
-        s = Serializer(app.config['SECRET_KEY'], expires_sec)
+        s = Serializer(current_app.config['SECRET_KEY'], expires_sec)
         return s.dumps({'user_id': self.id}).decode('utf-8')
 
     # verifies the reset password token and returns the user_id or None
     @staticmethod
     def verify_reset_token(token):
-        s = Serializer(app.config['SECRET_KEY'])
+        s = Serializer(current_app.config['SECRET_KEY'])
         try:
             user_id = s.loads(token)['user_id']
         except:
@@ -57,8 +54,8 @@ class User(db.Model, UserMixin):
 
 # Helper table for Coach sports
 sports = db.Table('sports',
-    db.Column('coach_id', db.Integer, db.ForeignKey('coach.id'), primary_key=True),
-    db.Column('sport_id', db.Integer, db.ForeignKey('sport.id'), primary_key=True)
+    db.Column('coach_id', db.Integer, db.ForeignKey('coach.id')),
+    db.Column('sport_id', db.Integer, db.ForeignKey('sport.id'))
     )
 
 # User = parent
@@ -66,7 +63,7 @@ class Coach(User):
     __tablename__ = 'coach'
 
     # primary key from parent User
-    id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
+    id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True, autoincrement=True)
 
     # unique attributes to coach
     sports = db.relationship('Sport', secondary=sports, lazy='subquery',
@@ -75,7 +72,7 @@ class Coach(User):
     # card hash
     card_file = db.Column(db.String(20), nullable=False, default='card.jpg')
 
-    hourly_rate = db.Column(db.Numeric, nullable=False, default=15)
+    hourly_rate = db.Column(db.Numeric(precision=6, scale=2), nullable=False, default=15.00)
 
     description = db.Column(db.Text, nullable=True)
 
@@ -106,8 +103,8 @@ class Role(db.Model):
 
 # Helper table for Match players
 players = db.Table('players',
-    db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
-    db.Column('match_id', db.Integer, db.ForeignKey('match.id'), primary_key=True)
+    db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
+    db.Column('match_id', db.Integer, db.ForeignKey('match.id'))
     )
 
 
@@ -143,8 +140,8 @@ class Match(db.Model):
 
 # Helper table for Event attendees
 attendees = db.Table('attendees',
-    db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
-    db.Column('event_id', db.Integer, db.ForeignKey('event.id'), primary_key=True)
+    db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
+    db.Column('event_id', db.Integer, db.ForeignKey('event.id'))
     )
 
 class Event(db.Model):
@@ -156,7 +153,7 @@ class Event(db.Model):
     title = db.Column(db.String(50), nullable=False)
     description = db.Column(db.Text, nullable=True)
     date = db.Column(db.Date, nullable=False, default=date.today)
-    price = db.Column(db.Numeric, nullable=False, default=10)
+    price = db.Column(db.Numeric(precision=6, scale=2), nullable=False, default=10.00)
     attendees_maxnumber = db.Column(db.Integer, nullable=False, default=50)
 
     location = db.Column(db.String(50), nullable=False, default='Torino')
@@ -210,26 +207,3 @@ class Sport(db.Model):
 
     def __repr__(self):
         return f"Sport('{self.name}')"
-
-
-
-'''
- ***** ALTERAR NO FUTURO QUANDO DECIDIRMOS SE VAMOS IMPLEMENTAR MENSAGENS (OU NAO) *****
-#Class description
-class Message(db.Model):
-    # primary key
-    id = db.Column(db.Integer, primary_key=True)
-
-    content = db.Column(db.Text, nullable=True)
-    date_posted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-
-    # foreign key = User
-    sender_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-
-    # foreign key = User
-    recipient_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-
-    def __repr__(self):
-        return f"Message('{self.content}', '{self.date_posted}')"
-
-'''

@@ -1,4 +1,3 @@
-import os
 from flask import Flask
 # Database management
 from flask_sqlalchemy import SQLAlchemy
@@ -8,34 +7,43 @@ from flask_bcrypt import Bcrypt
 from flask_login import LoginManager
 # Mail management
 from flask_mail import Mail
-# Environment variables
-from dotenv import load_dotenv, find_dotenv
-load_dotenv(find_dotenv())
+# Configuration
+from website.config import Config
 
-app = Flask(__name__)
-
-
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
-# hide password later !!!
-# mysql tutorial : https://www.youtube.com/watch?v=hQl2wyJvK5k
-#app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:1234abcd@localhost/users'
-
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
-
-db = SQLAlchemy(app)
-bcrypt = Bcrypt(app)
-
-# Flask-Login configuration
-login_manager = LoginManager(app)
-login_manager.login_view = 'login'
+# Flask-SQLAlchemy
+db = SQLAlchemy()
+# Flask-Bcrypt
+bcrypt = Bcrypt()
+# Flask-Login
+login_manager = LoginManager()
+login_manager.login_view = 'users.login'
 login_manager.login_message_category = 'info'
+# Flask-Mail
+mail = Mail()
 
-# Mail config
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = os.getenv('MAIL_USER')
-app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASS')
-mail = Mail(app)
 
-from website import routes
+def create_app(config_class=Config):
+	app = Flask(__name__)
+	app.config.from_object(Config)
+
+	# Extensions
+	db.init_app(app)
+	bcrypt.init_app(app)
+	login_manager.init_app(app)
+	mail.init_app(app)
+
+	# Blueprints
+	from website.coaches.routes import coaches
+	from website.events.routes import events
+	from website.main.routes import main
+	from website.matches.routes import matches
+	from website.users.routes import users
+	from website.errors.handlers import errors
+	app.register_blueprint(coaches)
+	app.register_blueprint(events)
+	app.register_blueprint(main)
+	app.register_blueprint(matches)
+	app.register_blueprint(users)
+	app.register_blueprint(errors)
+
+	return app
