@@ -26,13 +26,13 @@ def create_app(config_class=Config):
 	app = Flask(__name__)
 	app.config.from_object(Config)
 
-	# Extensions
+	# Initializing extensions
 	db.init_app(app)
 	bcrypt.init_app(app)
 	login_manager.init_app(app)
 	mail.init_app(app)
 
-	# Blueprints
+	# Initializing blueprints
 	from website.coaches.routes import coaches
 	from website.events.routes import events
 	from website.main.routes import main

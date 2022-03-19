@@ -2,8 +2,10 @@ from flask import url_for
 from website import mail
 from flask_mail import Message
 
+# Send reset email user
 def send_reset_email(user):
     token = user.get_reset_token()
+    
     msg = Message('Password Reset Request',
             sender='noreply@sportbuddy.com', recipients=[user.email])
 

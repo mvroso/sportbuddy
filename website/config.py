@@ -3,6 +3,7 @@ import os
 from dotenv import load_dotenv, find_dotenv
 load_dotenv(find_dotenv())
 
+# Website configuration and environment variables loading
 class Config:
 	SECRET_KEY = os.getenv('SECRET_KEY')
 

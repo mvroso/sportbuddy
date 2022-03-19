@@ -5,14 +5,13 @@ from wtforms import (StringField, SubmitField, DateField, TextAreaField,
 from wtforms.validators import (DataRequired, Length, ValidationError,
 		Optional, NumberRange)
 
-# Implementing MatchForm Mixin
+# Mixin for create and update match
 class MatchFormMixin():
 
 	title = StringField('Title',
 					validators=[DataRequired(), Length(min=2, max=50)])
 	description = TextAreaField('Description')
 
-	# DateTime is deprecated
 	date = DateField('Match Date', format='%Y-%m-%d',
 					validators=[DataRequired()])
 
@@ -28,17 +27,19 @@ class MatchFormMixin():
 
 	sport_id = SelectField('Sport', coerce=int)
 
-	# Date validation
+	# date validation
 	def validate_date(self, date):
 		if date.data < date_func.today():
 			raise ValidationError("The date cannot be in the past!")
 
-# Create new match Form
+
+# Create Match form extends MatchFormMixin
 class CreateMatchForm(FlaskForm, MatchFormMixin):
 
     submit = SubmitField('Create Match')
 
-# Update match Form
+
+# Update Match form extends MatchFormMixin
 class UpdateMatchForm(FlaskForm, MatchFormMixin):
 
     submit = SubmitField('Update Match')
@@ -52,7 +53,6 @@ class FilterMatchForm(FlaskForm):
 					validators=[Optional()])
 	description = TextAreaField('Description')
 
-	# DateTime is deprecated
 	date = DateField('Match Date', format='%Y-%m-%d',
 					validators=[Optional()])
 

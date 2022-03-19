@@ -1,16 +1,17 @@
 from flask import Blueprint, render_template
 
+# Declares blueprint
 main = Blueprint('main', __name__)
 
+
+# Show index page
 @main.route("/")
 @main.route("/index")
 def index():
     return render_template('index.html', title='Home')
 
-@main.route("/contact")
-def contact():
-    return render_template('contact.html', title='Contact')
 
+# Show about page
 @main.route("/about")
 def about():
     return render_template('about.html', title='About')
@@ -20,77 +21,50 @@ def about():
 from flask import flash, redirect, url_for
 from datetime import datetime
 from website import db, bcrypt
-from website.models import User, Role, Sport, Coach, Event, Timeperiod, Match
+from website.models import User, Coach, Event, Match
+from website.main.utils import fetch_models
 
-# Populate the database for the first time
-@main.route("/insertdata")
-def insertdata():
+# Populate the database for the first time with necessary data only
+@main.route("/insertdata/necessary")
+def necessary_insertdata():
 
-    # Create four timeperiods
-    timeperiods = [
-        Timeperiod(name='Morning'),
-        Timeperiod(name='Afternoon'),
-        Timeperiod(name='Evening'),
-        Timeperiod(name='Night')
-    ]
+    (timeperiods, roles, sports) = fetch_models()
+
+    # create four timeperiods
     db.session.add_all(timeperiods)
     db.session.commit() 
 
-    # Create three standard roles
-    roles = [
-        Role(name='Common'),
-        Role(name='Coach'),
-        Role(name='Company')
-    ]
+    # create three roles
     db.session.add_all(roles)
     db.session.commit()
-    
-    # Create 39 standard sports
-    sports = [
-        Sport(name='Archery'),
-        Sport(name='Artistic Gymnastics'),
-        Sport(name='Artistic Swimming'),
-        Sport(name='Athletics'),
-        Sport(name='Badminton'),
-        Sport(name='Basketball'),
-        Sport(name='Beach Volleyball'),
-        Sport(name='Biathlon'),
-        Sport(name='BMX Racing'),
-        Sport(name='Boxing'),
-        Sport(name='Diving'),
-        Sport(name='Equestrian'),
-        Sport(name='Fencing'),
-        Sport(name='Golf'),
-        Sport(name='Handball'),
-        Sport(name='Hockey'),
-        Sport(name='Judo'),
-        Sport(name='Kayak Flatwater'),
-        Sport(name='Kayak Slalom'),
-        Sport(name='Marathon Swimming'),
-        Sport(name='Modern Pentatlhlon'),
-        Sport(name='Montain Bike'),
-        Sport(name='Rhythmic Gymnastics'),
-        Sport(name='Road Cycling'),
-        Sport(name='Rowing'),
-        Sport(name='Rugby'),
-        Sport(name='Sailing'),
-        Sport(name='Soccer'),
-        Sport(name='Surfing'),
-        Sport(name='Swimming'),
-        Sport(name='Table Tennis'),
-        Sport(name='Tennis'),
-        Sport(name='Track Cycling'),
-        Sport(name='Trampoline'),
-        Sport(name='Triathlon'),
-        Sport(name='Volleyball'),
-        Sport(name='Water Polo'),
-        Sport(name='Weight Lifting'),
-        Sport(name='Wrestling')
-    ]
+
+    # create 39 sports
     db.session.add_all(sports)
     db.session.commit()
 
-    # Create 20 standard users
+    flash('The database was populated with minimal data', 'info')
+    return redirect(url_for('main.index'))
+
+
+# Populate the database for the first time with necessary and dummy data
+@main.route("/insertdata")
+def insertdata():
+
+    (timeperiods, roles, sports) = fetch_models()
+
+    # create four timeperiods
+    db.session.add_all(timeperiods)
+    db.session.commit() 
+
+    # create three roles
+    db.session.add_all(roles)
+    db.session.commit()
+
+    # create 39 sports
+    db.session.add_all(sports)
+    db.session.commit()
+
+    # create 20 standard users
     hashed_password = bcrypt.generate_password_hash(
                                     "123").decode('utf-8')
 
@@ -179,7 +153,7 @@ def insertdata():
     db.session.add_all(users)
     db.session.commit()
 
-    # Create 30 standard coaches
+    # create 30 standard coaches
     descr = ("I am a skilled Coach with 10 plus years of experience "
         "and in-depth knowledge of college athletic program regulations "
         "and mentoring of athletes. I consistently motivate and inspire "
@@ -498,7 +472,7 @@ def insertdata():
                 image_file='image-6.jpg',
                 description = descr)
     ]
-    # Assign sports for each Coach
+    # assign sports for each Coach
     coaches[0].sports.extend((sports[1], sports[8], sports[7]))
     coaches[1].sports.extend((sports[14], sports[18], sports[19]))
     coaches[2].sports.extend((sports[16], sports[13], sports[10]))
@@ -533,7 +507,7 @@ def insertdata():
     db.session.add_all(coaches)
     db.session.commit()
     
-    # Create 20 standard matches
+    # create 20 standard matches
     matches = [
         Match(title='Beach Volley with Friends',
                 description=('We play every day to train for a competition '
@@ -724,7 +698,7 @@ def insertdata():
                 time_period_id=2,
                 user_id=2)
     ]
-    # Assign players for each Match
+    # assign players for each Match
     matches[0].players.extend((users[1], users[2]))
     matches[1].players.extend((users[3], users[2]))
     matches[2].players.extend((users[3], users[4]))
@@ -749,7 +723,7 @@ def insertdata():
     db.session.add_all(matches)
     db.session.commit()
 
-    # Create 9 standard companies
+    # create 9 standard companies
     companies = [
         User(name='UFC',
                 email='ufc@teste.com',
@@ -801,7 +775,7 @@ def insertdata():
     db.session.add_all(companies)
     db.session.commit()
 
-    # Create 20 standard events
+    # create 20 standard events
     ev_descr = ("This event in this date will bring recognition to every "
         "participant in a way that nobody has ever witnessed before. "
         "Young athletes will be motivated and inspired by our actions "
@@ -970,7 +944,7 @@ def insertdata():
                 user_id=53,
                 description=ev_descr)
     ]
-    # Assign attendees for each Event
+    # assign attendees for each Event
     events[0].attendees.extend((users[1], users[2]))
     events[1].attendees.extend((users[14], users[3], users[1], users[0]))
     events[2].attendees.extend((users[1], users[5]))
@@ -996,5 +970,5 @@ def insertdata():
     db.session.add_all(events)
     db.session.commit()
 
-    flash('The database was populated', 'info')
+    flash('The database was populated with dummy data', 'info')
     return redirect(url_for('main.index'))

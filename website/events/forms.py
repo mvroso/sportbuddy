@@ -6,6 +6,7 @@ from wtforms import (StringField, SubmitField, DateField, TextAreaField,
 from wtforms.validators import (DataRequired, Length, EqualTo, ValidationError,
 		Optional, NumberRange)
 
+# Mixin for create and update events
 class EventFormMixin():
 
 	title = StringField('Title',
@@ -29,17 +30,19 @@ class EventFormMixin():
 
 	sport_id = SelectField('Sport', coerce=int)
 
-	# Date validation
+	# date validation
 	def validate_date(self, date):
 		if date.data < date_func.today():
 			raise ValidationError("The date cannot be in the past!")
 
-# Create new Event Form
+
+# Create Event form extends EventFormMixin
 class CreateEventForm(FlaskForm, EventFormMixin):
 
     submit = SubmitField('Create Event')
 
-# Update Event Form
+
+# Update Event form extends EventFormMixin
 class UpdateEventForm(FlaskForm, EventFormMixin):
 
     submit = SubmitField('Update Event')

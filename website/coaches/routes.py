@@ -1,4 +1,5 @@
-from flask import Blueprint, render_template, url_for, flash, redirect, request
+from flask import (Blueprint, render_template, url_for, flash, redirect,
+                    request, abort)
 from website import db
 from website.models import Sport, Coach
 from website.coaches.forms import UpdateCoachAccountForm, FilterCoachForm
@@ -6,39 +7,39 @@ from website.main.utils import save_picture
 from flask_login import current_user, login_required
 from sqlalchemy import or_, and_
 
-
+# Declares blueprint
 coaches = Blueprint('coaches', __name__)
 
 
+# Show current user coach account
 @coaches.route("/coach/account", methods=['GET', 'POST'])
 @login_required
 def coach_account():
     if current_user.role.name != "Coach":
-        flash('Your cannot access this page!', 'danger')
-        return redirect(url_for('main.index'))
+        abort(403) # 403 = forbidden access
 
-    coach = Coach.query.filter_by(id=current_user.id).first()
+    coach = Coach.query.get_or_404(current_user.id)
     
+    # initalizes the form and sport choices
     form = UpdateCoachAccountForm()
     form.sports.choices = [(row.id, row.name) for row 
                                     in Sport.query.order_by('name')]
 
     if form.validate_on_submit():
+        # saves card image and hash
         if form.card.data:
             card_file = save_picture(form.card.data, 400, 400)
             coach.card_file = card_file
 
         coach.hourly_rate = round(form.hourly_rate.data, 2)
-        print("TESTE \n\n")
-        print(form.hourly_rate.data)
-        print(type(form.hourly_rate.data))
         coach.phone_number = form.phone_number.data
         coach.description = form.description.data
 
+        # saves coach sports
         coach.sports = []
         if form.sports.data != [] and type(form.sports.data) is list:
             for sport_id in form.sports.data:
-                sport = Sport.query.get(sport_id)
+                sport = Sport.query.get_or_404(sport_id)
                 coach.sports.append(sport)
         elif type(form.sports.data) is int:
             sport = Sport.query.get(form.sports.data)
@@ -50,10 +51,12 @@ def coach_account():
         return redirect(url_for('coaches.coach_account'))
 
     elif request.method == 'GET':
+
         form.hourly_rate.data = coach.hourly_rate
         form.phone_number.data = coach.phone_number
         form.description.data = coach.description
-        # sports
+
+        # populates coach sports
         sport_id_list = []
         for sport in coach.sports:
             sport_id_list.append(sport.id)
@@ -64,9 +67,10 @@ def coach_account():
         else:
             plan = "Free"
 
-    # Get current user profile picture
+    # get current user profile picture
     image_file = url_for('static', filename='img/profile_pictures/' +
                         current_user.image_file)
+
     return render_template('coach_account.html', title='Coach Account',
                         image_file=image_file, form=form, plan=plan)
 
@@ -77,10 +81,9 @@ def coach_account():
 @login_required
 def find_coach(page=1, gender_id=0, sport_id=0, hourly_rate=0, name="-"):
     if current_user.role.name == "Company":
-        flash('Your cannot access this page!', 'danger')
-        return redirect(url_for('main.index'))
+        abort(403) # 403 = forbidden access
 
-    # Builds the search query
+    # builds the search query
     query = or_(Coach.hourly_rate >= 0)
 
     if sport_id != 0:
@@ -114,31 +117,29 @@ def find_coach(page=1, gender_id=0, sport_id=0, hourly_rate=0, name="-"):
 @login_required
 def filter_coach():
     if current_user.role.name == "Company":
-        flash('Your cannot access this page!', 'danger')
-        return redirect(url_for('main.index'))
+        abort(403) # 403 = forbidden access
 
+    # initializes the form and sport choices
     form = FilterCoachForm()
-
     sport_list = [(row.id, row.name) for row 
                                 in Sport.query.order_by('name')]
     sport_list.insert(0, (0, "All Sports"))
     form.sport_id.choices = sport_list
+ 
+    if form.validate_on_submit():
 
-    if request.method == 'POST':
-        if form.validate_on_submit():
+        name = form.name.data
+        sport_id = form.sport_id.data
+        gender = form.gender.data
+        hourly_rate = form.hourly_rate.data
 
-            name = form.name.data
-            sport_id = form.sport_id.data
-            gender = form.gender.data
-            hourly_rate = form.hourly_rate.data
+        if not name:
+            name = "-"
+        if hourly_rate == None:
+            hourly_rate = 0
 
-            if not name:
-                name = "-"
-            if hourly_rate == None:
-                hourly_rate = 0
-
-            return redirect(url_for('coaches.find_coach', sport_id=sport_id, name=name,
-                    gender_id=gender, hourly_rate=hourly_rate, page=1))
+        return redirect(url_for('coaches.find_coach', sport_id=sport_id, name=name,
+                gender_id=gender, hourly_rate=hourly_rate, page=1))
 
     return render_template('filter_coach.html', title='Filter Coach', form=form)
 
@@ -148,8 +149,7 @@ def filter_coach():
 @login_required
 def details_coach(coach_id):
     if current_user.role.name == "Company":
-        flash('Your cannot access this page!', 'danger')
-        return redirect(url_for('main.index'))
+        abort(403) # 403 = forbidden access
 
     coach = Coach.query.get_or_404(coach_id)
 
@@ -161,17 +161,18 @@ def details_coach(coach_id):
     return render_template('details_coach.html', title='Coach Details', coach=coach, gender=gender)
 
 
-# Shows the plans available for the coaches
+# Show the plans available for coaches
 @coaches.route("/coach/plans", methods=['GET', 'POST'])
 @login_required
 def plans():
     if current_user.role.name != "Coach":
-        flash('Your cannot access this page!', 'danger')
-        return redirect(url_for('main.index'))
+        abort(403) # 403 = forbidden access
 
     if request.method == "POST":
-        coach = Coach.query.filter_by(id=current_user.id).first()
 
+        coach = Coach.query.get_or_404(current_user.id)
+
+        # changes coach plan
         plan = ""
         if request.form.get("selectfree") != None:
             coach.plan_id = 1

@@ -24,7 +24,7 @@ my_cursor.execute("SHOW DATABASES")
 for db in my_cursor:
 	print(db)
 
-# Create tables
+# Create database tables
 from website.models import *
 from website import create_app
 app = create_app()

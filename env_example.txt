@@ -1,0 +1,11 @@
+# OLD Database URI for SQLite
+#DATABASE_URI=sqlite:///site.db
+# MySQL connection
+DATABASE_URI=mysql+pymysql://my_user:my_password@localhost/sportsbuddy
+MYSQL_USER=my_user
+MYSQL_PASS=my_password
+# Flask mail
+MAIL_USER=email@gmail.com
+MAIL_PASS=password
+# Flask secret key
+SECRET_KEY=secretkey

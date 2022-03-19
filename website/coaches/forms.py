@@ -4,10 +4,12 @@ from wtforms import (StringField, SubmitField, TextAreaField, SelectField,
 		SelectMultipleField, DecimalField)
 from wtforms.validators import DataRequired, Optional, NumberRange
 
+# Update coach account
 class UpdateCoachAccountForm(FlaskForm):
 	hourly_rate = DecimalField('Hourly Rate',
 					validators=[DataRequired(),
 							NumberRange(min=1, max=10000)])
+
 	description = TextAreaField('Description')
 
 	phone_number = StringField('Phone Number')
@@ -19,9 +21,12 @@ class UpdateCoachAccountForm(FlaskForm):
 
 	submit = SubmitField('Update')
 
+
+# Filter coaches
 class FilterCoachForm(FlaskForm):
 	name = StringField('Name',
 				validators=[Optional()])
+	
 	hourly_rate = DecimalField('Maximum Hourly Rate',
 					validators=[Optional()])
 
