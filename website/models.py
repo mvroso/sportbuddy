@@ -24,7 +24,7 @@ class User(db.Model, UserMixin):
     gender_id = db.Column(db.Integer, nullable=False, default=1)
 
     # user image hash
-    image_file = db.Column(db.String(20), nullable=False, default='default.jpg')
+    image_file = db.Column(db.String(30), nullable=False, default='default.jpg')
 
     # foreign key = Role
     role_id = db.Column(db.Integer, db.ForeignKey('role.id'), nullable=False, default=1)
@@ -74,7 +74,7 @@ class Coach(User):
     plan_id = db.Column(db.Integer, nullable=False, default=1)
 
     # coach card image hash
-    card_file = db.Column(db.String(20), nullable=False, default='card.jpg')
+    card_file = db.Column(db.String(30), nullable=False, default='card.jpg')
 
     # relationship = Coach | Many to Many | Sport
     sports = db.relationship('Sport', secondary=sports, lazy='subquery',
@@ -158,7 +158,7 @@ class Event(db.Model):
     location = db.Column(db.String(50), nullable=False, default='Torino')
 
     # event background image hash
-    background_file = db.Column(db.String(20), nullable=False, default='background-1.jpg')
+    background_file = db.Column(db.String(30), nullable=False, default='background-1.jpg')
 
     # foreign key = Sport
     sport_id = db.Column(db.Integer, db.ForeignKey('sport.id'), nullable=False)
