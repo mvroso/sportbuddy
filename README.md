@@ -32,4 +32,5 @@ Instructions for download and use:
 - If you are running it for the first time, choose between these routes
 	- Navigate to http://127.0.0.1:5000/insertdata/necessary if you want to insert necessary data only
 	- Navigate to http://127.0.0.1:5000/insertdata if you want to insert necessary and dummy data for testing purposes
+- Look at tree_explanation.txt for a summary of routes, templates and files
 - Enjoy the experience :)

@@ -1,0 +1,171 @@
+1. website
+
+1.1 coaches
+
+1.1.1 __init__.py	:	empty (used to make flask recognize '/coaches' as a package)
+1.1.2 forms.py		:	forms for Coach class
+
+1.1.2.1 UpdateCoachAccountForm	:	update coach account
+1.1.2.2 FilterCoachForm			:	filter coaches
+
+1.1.3 routes.py		:	routes for Coach class
+
+1.1.3.1 coach_account	:	show current user coach account
+1.1.3.2 find_coach		:	show a list of existing coaches
+1.1.3.3 filter_coach	:	filter a list of existing coaches
+1.1.3.4 details_coach	:	show details of a single coach
+1.1.3.5 plans			:	show the plans available for coaches
+
+1.2 errors
+
+1.2.1 __init__.py	:	empty (used to make flask recognize '/errors' as a package)
+1.2.2 handlers.py	:	routes for error handlers
+
+1.2.2.1 error_404		:	handle 404 not found errors
+1.2.2.2 error_403		:	handle 403 forbidden access errors
+1.2.2.3 error_500		:	handle 500 server errors
+
+1.3 events
+
+1.3.1 __init__.py	:	empty (used to make flask recognize '/events' as a package)
+1.3.2 forms.py		:	forms for Event class
+
+1.3.2.1 EventFormMixin		:	mixin for create and update events
+1.3.2.2 CreateEventForm		:	create event form extends EventFormMixin
+1.3.2.3 UpdateEventForm		:	update event form extends EventFormMixin
+1.3.2.4 FilterEventForm		:	filter event form			
+
+1.3.3 routes.py		:	routes for Event class
+
+1.3.3.1 create_event		:	create a new event
+1.3.3.2 find_event			:	show a list of existing events
+1.3.3.3 filter_event		:	filter a list of existing events
+1.3.3.4 details_event		:	show details of a single event
+1.3.3.5 update_event		:	update a single event that you own
+1.3.3.6 delete_event		:	delete a single event that you own
+1.3.3.7 buy_ticket_event	:	buy a ticket for an event
+1.3.3.8 summary_event		:	summarizes the events that the user is involved
+
+1.4 main
+
+1.4.1 __init__.py	:	empty (used to make flask recognize '/main' as a package)
+1.4.2 routes.py		:	routes for generic instructions and templates
+
+1.4.2.1 index					:	show index page
+1.4.2.2 about					:	show about page
+1.4.2.3 necessary_insertdata	:	populate the database for the first time with necessary data only
+1.4.2.4 insertdata				:	populate the database for the first time with necessary and dummy data
+
+1.4.3 utils.py		:	utility functions for app routes
+
+1.4.3.1 save_picture		:	save user uploaded picture in '/static/img/profile_pictures'
+1.4.3.2 fetch_models		:	create models list to populate the database
+
+1.5 matches
+
+1.5.1 __init__.py	:	empty (used to make flask recognize '/matches' as a package)
+1.5.2 forms.py		:	forms for Match class
+
+1.5.2.1 MatchFormMixin		:	mixin for create and update match
+1.5.2.2 CreateMatchForm		:	create match form extends MatchFormMixin
+1.5.2.3 UpdateMatchForm		:	update match form extends MatchFormMixin
+1.5.2.4 FilterMatchForm		:	filter match form
+
+1.5.3 routes.py		:	routes for Match class
+
+1.5.3.1  create_match			:	create a new match
+1.5.3.2  find_match				:	show a list of existing matches
+1.5.3.3  filter_match			:	filter a list of existing matches
+1.5.3.4  summary_match			:	summarizes the matches that the user is involved
+1.5.3.5  details_match			:	show details of a single match
+1.5.3.6  join_match				:	join a match as a player
+1.5.3.7  quit_match				:	quit a match as a player
+1.5.3.8  remove_player_match	:	remove a player from a match
+1.5.3.9  update_match			:	update a single match that you own
+1.5.3.10 delete_match			:	delete a single match that you own
+
+1.6 static	:	static files such as css, js and user uploaded images
+
+1.7 templates
+
+1.7.1  about.html						:	main.about route
+1.7.2  account.html						:	users.account route
+1.7.3  base.html						:	parent template to all others (header, breadcrumbs, footer, doctype declaration, add css and js files)
+1.7.4  coach_account.html				:	coaches.coach_account route
+1.7.5  create_update_event.html			:	events.create_event and events.update_event routes
+1.7.6  create_update_match.html			:	matches.create_match, matches.update_match and matches.filter_match routes
+1.7.7  details_coach.html				:	coaches.details_coach route
+1.7.8  details_event.html				:	events.details_event route
+1.7.9  details_match.html				:	matches.details_match route
+1.7.10 filter_coach.html				:	coaches.filter_coach route
+1.7.11 filter_event.html				:	events.filter_event route
+1.7.12 find_coach.html					:	coaches.find_coach route
+1.7.13 find_event.html					:	events.find_event route
+1.7.14 find_match.html					:	matches.find_match route
+1.7.15 index.html						:	main.index route
+1.7.16 login.html						:	users.login route
+1.7.17 plans.html						:	coaches.plans route
+1.7.18 register.html					:	users.register route
+1.7.19 reset_password.html				:	users.reset_password route
+1.7.20 reset_password_request.html		:	users.reset_password_request route
+
+1.7.21 errors
+
+1.7.21.1 403.html		:	403 forbidden access error route
+1.7.21.2 404.html		:	404 not found error route
+1.7.21.3 500.html		:	500 server error route
+
+1.8 users
+
+1.8.1 __init__.py	:	empty (used to make flask recognize '/users' as a package)
+1.8.2 forms.py		:	forms for User class
+
+1.8.2.1 RegistrationForm		:	user registration form
+1.8.2.2 LoginForm				:	login user form
+1.8.2.3 RequestResetForm		:	request reset password user form
+1.8.2.4 ResetPasswordForm		:	reset password user form
+1.8.2.5 UpdateAccountForm		:	update user form
+
+1.8.3 routes.py		:	routes for User class
+
+1.8.3.1 register					:	register a new user
+1.8.3.2 login						:	login user
+1.8.3.3 logout						:	logout user
+1.8.3.4 reset_password_request		:	reset password request user
+1.8.3.5 reset_password				:	reset password user
+1.8.3.6 account						:	show current user account
+
+1.8.4 utils.py		:	utility functions for user routes
+
+1.8.4.1 send_reset_email		:	send reset email user
+
+1.9 __init__.py		:	app imports, extensions and blueprints initialization
+
+1.10 config.py		:	website configuration and environment variables loading
+
+1.11 models.py		:	models for database creation
+
+1.11.1  User			:	User class extends UserMixin (Flask-Login)
+1.11.2  sports			:	helper table for Coach | Sport relationship
+1.11.3  Coach			:	Coach class extends User
+1.11.4  Role			:	Role class (user permissions)
+1.11.5  players			:	helper table for Match | User relationship
+1.11.6  Match			:	Match class
+1.11.7  attendees		:	helper table for Event | User relationship
+1.11.8  Event			:	Event class
+1.11.9  Timeperiod		:	Timeperiod class
+1.11.10 Sport			:	Sport class
+
+2. .gitignore			:	file extensions that git is supposed to ignore	
+
+3. create_db.py			:	creates mysql database
+
+4. env_example.txt		:	.env file example
+
+5. README.md
+
+6. requirements.txt		:	required modules list
+
+7. run.py				:	run Flask app
+
+8. tree-explanation
