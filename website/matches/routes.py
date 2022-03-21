@@ -44,7 +44,7 @@ def create_match():
             db.session.commit()
 
             flash('Your match has been created!', 'success')
-            return redirect(url_for('main.index'))
+            return redirect(url_for('matches.find'))
         else:
             flash('Your match has not been created! Check your inputs', 'danger')
     return render_template('create_update_match.html', title='Create Match', form=form, legend='Create')
